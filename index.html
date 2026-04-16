@@ -16,7 +16,7 @@
   --yellow:#b45309;--ybg:#fef9c3;
   --red:#dc2626;--rbg:#fee2e2;
   --meli:#f59e0b;--mlbg:#fffbeb;
-  --shp:#ea580c;--shpbg:#fff7ed;
+  --shp:#ea580c;--shpbg:#fff7ed;--tkt:#010101;--tktbg:#f0f0f0;
   --amz:#0284c7;--amzbg:#e0f2fe;
   --purple:#7c3aed;--purpbg:#ede9fe;
 
@@ -64,6 +64,7 @@ html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--t
 .ni.sub{padding-left:30px;font-size:11.5px;}
 .ni.act-meli{border-left-color:var(--meli);color:#92400e;background:var(--mlbg);font-weight:700;}
 .ni.act-shp{border-left-color:var(--shp);color:#9a3412;background:var(--shpbg);font-weight:700;}
+.ni.act-tkt{border-left-color:var(--tkt);color:#010101;background:var(--tktbg);font-weight:700;}
 .ni.act-amz{border-left-color:var(--amz);color:#075985;background:var(--amzbg);font-weight:700;}
 .ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sb-bot{padding:12px 16px;border-top:1px solid var(--border);}
@@ -267,6 +268,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
               <option value="">Todos os Marketplaces</option>
               <option value="meli">Mercado Livre</option>
               <option value="shp">Shopee</option>
+              <option value="tkt">TikTok Shop</option>
               <option value="amz">Amazon</option>
             </select>
             <select id="df-origem" onchange="rDash()" style="padding:6px 10px;font-size:12px;">
@@ -318,6 +320,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
               <th class="thg-imp" colspan="2">ICMS</th>
               <th rowspan="2" class="th-sku">Meli</th>
               <th rowspan="2" class="th-sku">Shopee</th>
+              <th rowspan="2" class="th-sku">TikTok</th>
               <th rowspan="2" class="th-sku">Amazon</th>
               <th rowspan="2" class="th-sku">Marca</th>
               <th rowspan="2" class="th-sku">Categoria</th>
@@ -406,6 +409,34 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
           <tbody id="tbb-meli"></tbody>
         </table></div></div>
       </div>
+
+      <div class="screen" id="screen-tkt">
+        <div class="ph" style="margin-bottom:8px;"><div class="pt" style="color:var(--tkt);">TikTok Shop</div><span class="tsm tmu">Comissão 6% · Frete editável (padrão R$ 4,00)</span></div>
+        <div class="sticky-bar">
+          <input type="text" id="mkt-busca-tkt" placeholder="Buscar SKU..." style="width:180px;" oninput="filtrarMkt('tkt')">
+          <select id="mkt-tipo-tkt" onchange="filtrarMkt('tkt')" style="padding:6px 10px;font-size:12px;">
+            <option value="">Todos os tipos</option><option value="Importado">Importado</option><option value="Nacional">Nacional</option>
+          </select>
+          <select id="mkt-marca-tkt" onchange="filtrarMkt('tkt')" style="padding:6px 10px;font-size:12px;">
+            <option value="">Todas as marcas</option>
+          </select>
+          <select id="mkt-ordem-tkt" onchange="filtrarMkt('tkt')" style="padding:6px 10px;font-size:12px;">
+            <option value="sku-asc">SKU A-Z</option><option value="sku-desc">SKU Z-A</option>
+            <option value="mg-desc">Margem ↓</option><option value="mg-asc">Margem ↑</option>
+            <option value="preco-desc">Preço ↓</option><option value="preco-asc">Preço ↑</option>
+          </select>
+          <button class="btn btn-sm" onclick="limparMktFiltros('tkt')">✕ Limpar</button>
+        </div><!-- /sticky-bar tkt -->
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr>
+              <th class="th-sku">SKU</th><th>Nome</th><th>Tipo</th><th>Custo</th>
+              <th>Preço</th><th>Frete</th><th>Tar%</th><th>Margem R$</th><th>Margem%</th><th>Break-even</th>
+            </tr></thead>
+            <tbody id="tbb-tkt"></tbody>
+          </table>
+        </div>
+      </div><!-- /screen-tkt -->
 
       <div class="screen" id="screen-shp">
         <div class="sticky-bar" style="padding-top:0;">
@@ -508,6 +539,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
         <div class="flex g8 mt8" style="margin-bottom:16px;">
           <button class="btn btn-p" onclick="setRap('meli')" id="rt-meli">Mercado Livre</button>
           <button class="btn" onclick="setRap('shp')" id="rt-shp">Shopee</button>
+          <button class="btn" onclick="setRap('tkt')" id="rt-tkt">TikTok</button>
           <button class="btn" onclick="setRap('amz')" id="rt-amz">Amazon</button>
         </div>
         <div>
@@ -705,6 +737,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
     <div class="gr g3">
       <label class="flex fc g8" style="cursor:pointer;"><input type="checkbox" id="fpm"><span style="color:var(--meli);">Mercado Livre</span></label>
       <label class="flex fc g8" style="cursor:pointer;"><input type="checkbox" id="fps2"><span style="color:var(--shp);">Shopee</span></label>
+      <label class="flex fc g8" style="cursor:pointer;"><input type="checkbox" id="fptkt"><span style="color:var(--tkt);">TikTok Shop</span></label>
       <label class="flex fc g8" style="cursor:pointer;"><input type="checkbox" id="fpa"><span style="color:var(--amz);">Amazon</span></label>
     </div>
     <div class="mf">
@@ -719,7 +752,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
 <div class="mov" id="mod-import">
   <div class="mod" style="width:800px;max-width:96vw;">
     <div class="mt">Importação em Lote</div>
-    <p class="tmu tsm" style="margin-bottom:12px;">Cole os dados do Excel (Ctrl+C nas células → Ctrl+V aqui) ou envie um arquivo .xlsx / .csv. Colunas esperadas: <strong>SKU · Nome · Tipo · NCM · Peso(g) · Custo · ST · IPI% · ICMS% · Meli · Shopee · Amazon · Marca · Categoria</strong></p>
+    <p class="tmu tsm" style="margin-bottom:12px;">Cole os dados do Excel (Ctrl+C nas células → Ctrl+V aqui) ou envie um arquivo .xlsx / .csv. Colunas esperadas: <strong>SKU · Nome · Tipo · NCM · Peso(g) · Custo · ST · IPI% · ICMS% · Meli · Shopee · Amazon · TikTok · Marca · Categoria</strong></p>
     <div style="display:flex;gap:8px;margin-bottom:10px;">
       <button class="btn btn-sm" onclick="document.getElementById('imp-upload').click()">📂 Enviar arquivo</button>
       <input type="file" id="imp-upload" accept=".xlsx,.csv,.xls,.tsv" style="display:none;" onchange="impCarregarArquivo(this)">
@@ -747,6 +780,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
         <option value="admin">Admin (acesso total)</option>
         <option value="meli">Responsável Mercado Livre</option>
         <option value="shp">Responsável Shopee</option>
+                        <option value="tkt">Responsável TikTok</option>
         <option value="amz">Responsável Amazon</option>
       </select>
     </div>
@@ -1012,7 +1046,7 @@ async function sbPersist(k, v) {
         ncm: p.ncm||null, peso: p.peso||0, custo: p.custo||0,
         st: p.st||0, ipi: p.ipi||0, pis: p.pis||9.25, icms: p.icms||0,
         marca: p.marca||null, categoria: p.categoria||null,
-        meli: !!p.meli, shp: !!p.shp, amz: !!p.amz,
+        meli: !!p.meli, shp: !!p.shp, amz: !!p.amz, tkt: !!p.tkt,
         atualizado_em: new Date().toISOString(),
         atualizado_por: p.upBy||null
       }, { onConflict: 'sku' });
@@ -1126,7 +1160,7 @@ async function sbLoad() {
         custo: parseFloat(p.custo)||0, st: parseFloat(p.st)||0,
         ipi: parseFloat(p.ipi)||0, pis: parseFloat(p.pis)||9.25,
         icms: parseFloat(p.icms)||0, marca: p.marca||'',
-        categoria: p.categoria||'', meli: !!p.meli, shp: !!p.shp, amz: !!p.amz,
+        categoria: p.categoria||'', meli: !!p.meli, shp: !!p.shp, amz: !!p.amz, tkt: !!p.tkt,
         upAt: p.atualizado_em ? p.atualizado_em.substring(0,10) : '',
         upBy: p.atualizado_por||''
       }));
@@ -1270,6 +1304,10 @@ function fShp(preco){
   if(p<=199.99)return{frete:20,tar:14};
   return{frete:26,tar:14};
 }
+function fTkt(d){
+  // TikTok: frete padrão R$4 (editável), comissão padrão 6% (editável)
+  return{frete:parseFloat((d&&d.frete!=null)?d.frete:4)||4,tar:parseFloat((d&&d.tar!=null&&d.tar!==0)?d.tar:6)||6};
+}
 
 // ── UTILS ─────────────────────────────────────────────────────────
 function fn(v,d=2){return parseFloat(v||0).toFixed(d).replace('.',',');}
@@ -1290,8 +1328,8 @@ function cMarg(p,preco,frete,tarP,reb,adsP){if(!preco)return{r:'',p:''};const pr
 
 // ── VARIÁVEIS GLOBAIS ─────────────────────────────────────────────
 let CU=null;
-const PL={admin:'Administrador',meli:'Resp. Mercado Livre',shp:'Resp. Shopee',amz:'Resp. Amazon'};
-const AVC={admin:'#1f6feb',meli:'#b3a200',shp:'#c2570f',amz:'#0e7490'};
+const PL={admin:'Administrador',meli:'Resp. Mercado Livre',shp:'Resp. Shopee',amz:'Resp. Amazon',tkt:'Resp. TikTok'};
+const AVC={admin:'#1f6feb',meli:'#b3a200',shp:'#c2570f',amz:'#0e7490',tkt:'#010101'};
 
 // ── INIT DATA ─────────────────────────────────────────────────────
 function initData(){
@@ -1388,9 +1426,10 @@ function cMarg(p,preco,frete,tarP,reb,adsP){if(!preco)return{r:'',p:''};const pr
 
 // ── SIDEBAR E NAVEGAÇÃO ───────────────────────────────────────────
 const NAVS={
-  admin:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'meli',lbl:'Mercado Livre',dot:'var(--meli)',sub:true},{id:'amz',lbl:'Amazon',dot:'var(--amz)',sub:true},{id:'shp',lbl:'Shopee',dot:'var(--shp)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'},{sec:'Financeiro'},{id:'cmv',lbl:'CMV Contábil',dot:'var(--text3)',sub:true},{id:'hist',lbl:'Histórico de Custos',dot:'var(--purple)',sub:true},{id:'admin',lbl:'Usuários',dot:'var(--red)'}],
+  admin:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'meli',lbl:'Mercado Livre',dot:'var(--meli)',sub:true},{id:'amz',lbl:'Amazon',dot:'var(--amz)',sub:true},{id:'shp',lbl:'Shopee',dot:'var(--shp)',sub:true},{id:'tkt',lbl:'TikTok Shop',dot:'var(--tkt)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'},{sec:'Financeiro'},{id:'cmv',lbl:'CMV Contábil',dot:'var(--text3)',sub:true},{id:'hist',lbl:'Histórico de Custos',dot:'var(--purple)',sub:true},{id:'admin',lbl:'Usuários',dot:'var(--red)'}],
   meli:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'meli',lbl:'Mercado Livre',dot:'var(--meli)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'}],
   shp:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'shp',lbl:'Shopee',dot:'var(--shp)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'}],
+  tkt:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'tkt',lbl:'TikTok Shop',dot:'var(--tkt)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'}],
   amz:[{id:'dash',lbl:'Dashboard',dot:'#7d8590'},{id:'base',lbl:'Base de Dados',dot:'var(--accent)'},{sec:'Marketplaces'},{id:'amz',lbl:'Amazon',dot:'var(--amz)',sub:true},{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'}],
 };
 
@@ -1417,6 +1456,7 @@ function nav(id){
   if(id==='base'){rBase();setTimeout(renderMarcasCats,50);}
   if(id==='meli')rMkt('meli');
   if(id==='shp')rMkt('shp');
+  if(id==='tkt')rMkt('tkt');
   if(id==='amz')rMkt('amz');
   if(id==='hist')setHistTab('imp');
   if(id==='cmv'){initCmvClbs();rCmv();}
@@ -1442,13 +1482,13 @@ function rDash(){
   if(f.marca)psFilt=psFilt.filter(p=>p.marca===f.marca);
   if(f.cat)psFilt=psFilt.filter(p=>p.categoria===f.cat);
   const chips=[];
-  if(f.mk)chips.push({lbl:'Marketplace: '+{meli:'Meli',shp:'Shopee',amz:'Amazon'}[f.mk],id:'df-mk'});
+  if(f.mk)chips.push({lbl:'Marketplace: '+{meli:'Meli',shp:'Shopee',tkt:'TikTok',amz:'Amazon'}[f.mk],id:'df-mk'});
   if(f.origem)chips.push({lbl:'Origem: '+f.origem,id:'df-origem'});
   if(f.marca)chips.push({lbl:'Marca: '+f.marca,id:'df-marca'});
   if(f.cat)chips.push({lbl:'Cat: '+f.cat,id:'df-cat'});
   const chipEl=document.getElementById('dash-filtros-ativos');
   if(chipEl)chipEl.innerHTML=chips.map(ch=>`<span style="display:inline-block;background:var(--accent2);color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin:2px;cursor:pointer;" onclick="document.getElementById('${ch.id}').value='';rDash()">✕ ${ch.lbl}</span>`).join('');
-  function getMkList(){return f.mk?[f.mk]:['meli','shp','amz'];}
+  function getMkList(){return f.mk?[f.mk]:['meli','shp','tkt','amz'];}
   function avgMkFilt(mk){const at=psFilt.filter(p=>p[mk]);const vs=at.map(p=>{const d=mkt[mk+'_'+p.sku]||{};const pr=parseFloat(d.preco)||0;const fr=mk==='meli'?fM(p.peso,pr):(parseFloat(d.frete)||0);const m=cMarg(p,pr,fr,d.tar,d.reb,d.ads);return m.p===''?null:m.p;}).filter(v=>v!==null);return vs.length?vs.reduce((a,b)=>a+b,0)/vs.length:null;}
   const mks=getMkList();
   const imp=psFilt.filter(p=>p.tipo==='Importado'),nac=psFilt.filter(p=>p.tipo==='Nacional');
@@ -1467,7 +1507,8 @@ function rDash(){
   const QUICK=[{id:'base',lbl:'Base de Dados',ic:'🗄️',bg:'#e0e7ff'},{id:'meli',lbl:'Mercado Livre',ic:'🛒',bg:'#fffbeb'},{id:'shp',lbl:'Shopee',ic:'📦',bg:'#fff7ed'},{id:'amz',lbl:'Amazon',ic:'🅰️',bg:'#e0f2fe'},{id:'rap',lbl:'Prec. Rápida',ic:'⚡',bg:'#f5f3ff'},{id:'hist',lbl:'Histórico',ic:'📋',bg:'#f0fdf4'}];
   const dq=document.getElementById('dash-quick');
   if(dq)dq.innerHTML=QUICK.map(q=>`<div onclick="nav('${q.id}')" style="background:${q.bg};border:1px solid var(--border);border-radius:var(--r2);padding:14px;text-align:center;cursor:pointer;transition:transform .12s;" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''"><div style="font-size:22px;margin-bottom:6px;">${q.ic}</div><div style="font-size:11px;font-weight:700;color:var(--text);">${q.lbl}</div></div>`).join('');
-  const mkCards=[{mk:'meli',lbl:'Mercado Livre',avg:amMeli,dot:'#b45309',bg:'#fffbeb',ativos:tm},{mk:'shp',lbl:'Shopee',avg:amShp,dot:'#9a3412',bg:'#fff7ed',ativos:ts},{mk:'amz',lbl:'Amazon',avg:amAmz,dot:'#075985',bg:'#e0f2fe',ativos:ta}];
+  const amTkt=avgMkFilt('tkt');const tt=(LS.get('lb_p')||[]).filter(p=>p.tkt).length;
+  const mkCards=[{mk:'meli',lbl:'Mercado Livre',avg:amMeli,dot:'#b45309',bg:'#fffbeb',ativos:tm},{mk:'shp',lbl:'Shopee',avg:amShp,dot:'#9a3412',bg:'#fff7ed',ativos:ts},{mk:'tkt',lbl:'TikTok Shop',avg:amTkt,dot:'#010101',bg:'#f0f0f0',ativos:tt},{mk:'amz',lbl:'Amazon',avg:amAmz,dot:'#075985',bg:'#e0f2fe',ativos:ta}];
   const dm2=document.getElementById('dash-mkt-mg');
   if(dm2)dm2.innerHTML=mkCards.map(x=>{const mg=isQtd?x.ativos:(x.avg===null?'—':fn(x.avg)+'%');const col=isQtd?'var(--text)':x.avg===null?'var(--text3)':x.avg<15?'var(--red)':x.avg<18?'var(--yellow)':'var(--green)';const bar=isQtd?0:x.avg===null?0:Math.min(100,x.avg/30*100);return`<div class="sc" style="background:${x.bg};"><div class="sc-l" style="color:${x.dot};">${x.lbl}</div><div style="font-size:36px;font-weight:700;color:${col};margin:8px 0;">${mg}</div><div style="background:#e5e7eb;border-radius:4px;height:6px;margin-bottom:8px;"><div style="background:${col};height:6px;border-radius:4px;width:${bar}%;"></div></div><div class="sc-s" style="color:${x.dot};">${x.ativos} produtos ativos</div></div>`;}).join('');
 }
@@ -1569,6 +1610,7 @@ function rowB(p){
     <td class="td-imp tdc">${pc(p.icms)}</td><td class="td-imp tdc">${fR(cv*icms)}</td>
     ${mkChip('meli',p.meli)}
     ${mkChip('shp',p.shp)}
+    ${mkChip('tkt',p.tkt)}
     ${mkChip('amz',p.amz)}
     <td class="tdc tmu">${p.marca||'—'}</td>
     <td class="tdc tmu">${p.categoria||'—'}</td>
@@ -1607,13 +1649,13 @@ function openPM(id){
     document.getElementById('fpp').value=p.peso||'';document.getElementById('fpc').value=p.custo||'';
     document.getElementById('fpst').value=p.st||'';document.getElementById('fpipi').value=p.ipi||'';
     document.getElementById('fppis').value=p.pis||'';document.getElementById('fpicms').value=p.icms||'';
-    document.getElementById('fpm').checked=!!p.meli;document.getElementById('fps2').checked=!!p.shp;document.getElementById('fpa').checked=!!p.amz;
+    document.getElementById('fpm').checked=!!p.meli;document.getElementById('fps2').checked=!!p.shp;document.getElementById('fpa').checked=!!p.amz;document.getElementById('fptkt').checked=!!p.tkt;
     renderMarcasCats();
     setTimeout(()=>{const sm=document.getElementById('fp-marca'),sc=document.getElementById('fp-cat');if(sm)sm.value=p.marca||'';if(sc)sc.value=p.categoria||'';},50);
   } else {
     flds.forEach(f=>document.getElementById(f).value='');
     document.getElementById('fpt').value='Importado';
-    ['fpm','fps2','fpa'].forEach(f=>document.getElementById(f).checked=false);
+    ['fpm','fps2','fpa','fptkt'].forEach(f=>document.getElementById(f).checked=false);
     renderMarcasCats();
   }
   document.getElementById('mprod').classList.add('open');
@@ -1655,6 +1697,7 @@ function saveProd(){
     categoria:categoria,
     meli:!!(document.getElementById('fpm')||{}).checked,
     shp:!!(document.getElementById('fps2')||{}).checked,
+    tkt:!!(document.getElementById('fptkt')||{}).checked,
     amz:!!(document.getElementById('fpa')||{}).checked,
     upAt:td(),
     upBy:CU?CU.user:'sistema',
@@ -1663,7 +1706,7 @@ function saveProd(){
   if(ePid){
     const idx=ps.findIndex(x=>x.id===ePid);
     if(idx>=0){nd.id=ePid;
-      if(oProd){[{k:'custo',l:'Custo',f:v=>'R$ '+fn(v)},{k:'st',l:'ST',f:v=>'R$ '+fn(v)},{k:'ipi',l:'IPI %',f:v=>fn(v)+'%'},{k:'pis',l:'PIS/COF %',f:v=>fn(v)+'%'},{k:'icms',l:'ICMS %',f:v=>fn(v)+'%'}].forEach(c=>{if(parseFloat(oProd[c.k]||0).toFixed(2)!==parseFloat(nd[c.k]||0).toFixed(2))changes.push({campo:c.l,ant:c.f(oProd[c.k]||0),novo:c.f(nd[c.k]||0)});});}
+      if(oProd){[{k:'custo',l:'Custo',f:v=>parseFloat(v)||0},{k:'st',l:'ST',f:v=>parseFloat(v)||0},{k:'ipi',l:'IPI %',f:v=>parseFloat(v)||0},{k:'pis',l:'PIS/COF %',f:v=>parseFloat(v)||0},{k:'icms',l:'ICMS %',f:v=>parseFloat(v)||0}].forEach(c=>{if(parseFloat(oProd[c.k]||0).toFixed(2)!==parseFloat(nd[c.k]||0).toFixed(2))changes.push({campo:c.l,ant:c.f(oProd[c.k]||0),novo:c.f(nd[c.k]||0)});});}
       ps[idx]=nd;}
   } else {nd.id=Date.now();ps.push(nd);}
   LS.set('lb_p',ps);cM('mprod');rBase();toast('Produto salvo!');
@@ -1705,7 +1748,7 @@ function rMkt(mk){
 
 function rowM(p,mk){
   if(!p||!p.sku)return''; // guard
-  const d=gM(p.sku,mk)||{},isMeli=mk==='meli',isShp=mk==='shp';
+  const d=gM(p.sku,mk)||{},isMeli=mk==='meli',isShp=mk==='shp',isTkt=mk==='tkt';
   const preco=parseFloat(d.preco)||0;
   let frete,tar,reb,ads;
   if(isShp){
@@ -1716,6 +1759,12 @@ function rowM(p,mk){
     ads=parseFloat(d.ads)||0;
     // Salvar tar e frete calculados para consistência
     if(preco){const mk2=LS.get('lb_m')||{};const k='shp_'+p.sku;if(!mk2[k])mk2[k]={};mk2[k].tar=tar;mk2[k].frete=frete;LS.set('lb_m',mk2);}
+  } else if(isTkt){
+    const tktCalc=fTkt(d);
+    frete=tktCalc.frete;
+    tar=tktCalc.tar;
+    reb=0;
+    ads=parseFloat(d.ads)||0;
   } else {
     frete=isMeli?fM(p.peso,preco):(parseFloat(d.frete)||0);
     tar=parseFloat(d.tar)||0;
@@ -1734,16 +1783,16 @@ function rowM(p,mk){
     const disp=val?(fmt==='pct'?pc(val):fR(val)):'—';
     return`<td class="tdc td-edit ${extraClass}" id="cell-${id}" style="min-width:${w||'80px'};" onclick="ativaEdit('${id}','${field}','${p.sku}','${mk}','${fmt}')">${disp}</td>`;
   }
-  // Célula de frete: Meli=automático, Shopee=automático, Amazon=editável
+  // Célula de frete: Meli=automático, Shopee=automático, TikTok=editável(padrão R$4), Amazon=editável
   const fCell=(isMeli||isShp)
     ?`<td class="tdc col-frete" id="fr-${mk}-${p.sku}">${preco?fR(frete):'—'}</td>`
-    :editCell('fr-'+mk+'-'+p.sku,d.frete||0,'val','frete','80px','col-frete');
-  // Célula de tarifa: Shopee=automático, outros=editável
+    :editCell('fr-'+mk+'-'+p.sku,isTkt?(d.frete!=null?d.frete:4):(d.frete||0),'val','frete','80px','col-frete');
+  // Célula de tarifa: Shopee=automático, TikTok=editável(padrão 6%), outros=editável
   const tarCell=isShp
-    ?`<td class="tdc col-tarifa" id="cell-tar-${mk}-${p.sku}">${preco?pc(tar):'—'}</td>`
-    :editCell('tar-'+mk+'-'+p.sku,d.tar||0,'pct','tar','64px','col-tarifa');
-  // Célula rebate: Shopee=oculto (sem rebate), outros=editável
-  const rebCell=isShp
+    ?`<td class="tdc col-tarifa" id="cell-tar-${mk}-${p.sku}">${pc(tar)}</td>`
+    :editCell('tar-'+mk+'-'+p.sku,isTkt?(d.tar||6):(d.tar||0),'pct','tar','64px','col-tarifa');
+  // Célula rebate: Shopee e TikTok=oculto (sem rebate), outros=editável
+  const rebCell=(isShp||isTkt)
     ?`<td class="tdc col-tarifa">—</td>`
     :editCell('reb-'+mk+'-'+p.sku,d.reb||0,'val','reb','80px','col-tarifa');
   return`<tr id="mr-${mk}-${p.sku}" data-sku="${p.sku}">
@@ -1786,6 +1835,8 @@ function lU(sku,mk){
   let frete,tar,reb,ads;
   if(mk==='shp'){
     const sc=fShp(preco);frete=sc.frete;tar=sc.tar;reb=0;ads=parseFloat(d.ads)||0;
+  } else if(mk==='tkt'){
+    const tc=fTkt(d);frete=tc.frete;tar=tc.tar;reb=0;ads=parseFloat(d.ads)||0;
   } else {
     tar=parseFloat(d.tar)||0;reb=parseFloat(d.reb)||0;ads=parseFloat(d.ads)||0;
     frete=mk==='meli'?fM(p.peso,preco):(parseFloat(d.frete)||0);
@@ -1801,8 +1852,8 @@ function lU(sku,mk){
   if(eP){eP.textContent=m.p===''?'—':pc(m.p);eP.className='tdc col-mg '+mC;}
   if(eTR)eTR.textContent=preco&&tar?fR((preco*tar/100)-reb):'—';
   if(eAR)eAR.textContent=preco&&ads?fR(preco*ads/100):'—';
-  if(eFR&&(mk==='meli'||mk==='shp'))eFR.textContent=preco?fR(frete):'—';
-  if(eTarCell&&mk==='shp')eTarCell.textContent=preco?pc(tar):'—';
+  if(eFR&&(mk==='meli'||mk==='shp'||mk==='tkt'))eFR.textContent=preco?fR(frete):'—';
+  if(eTarCell&&(mk==='shp'||mk==='tkt'))eTarCell.textContent=preco?pc(tar):'—';
 }
 
 // ── HISTÓRICO ──────────────────────────────────────────────────────
@@ -1833,7 +1884,7 @@ function rHist(){
   else if(ordem==='sku-az')h.sort((a,b)=>(a.sku||'').localeCompare(b.sku||''));
   else if(ordem==='sku-za')h.sort((a,b)=>(b.sku||'').localeCompare(a.sku||''));
   const tb=document.getElementById('tbb-hist');
-  if(tb)tb.innerHTML=h.length?h.map(x=>{const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');const tipo=x.tipo||(tipoMap[x.sku]||'—');const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc"><span class="chip ${tipo==='Importado'?'ci':'cna'}">${tipo}</span></td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant||'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo||'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHist('${x.id}')">Excluir</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="nd">Nenhum registro encontrado.</td></tr>`;
+  if(tb)tb.innerHTML=h.length?h.map(x=>{const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');const tipo=x.tipo||(tipoMap[x.sku]||'—');const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc"><span class="chip ${tipo==='Importado'?'ci':'cna'}">${tipo}</span></td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant!=null&&x.ant!==''?'R$ '+fn(x.ant):'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo!=null&&x.novo!==''?'R$ '+fn(x.novo):'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHist('${x.id}')">Excluir</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="nd">Nenhum registro encontrado.</td></tr>`;
 }
 function delHist(id){if(!confirm('Excluir?'))return;LS.set('lb_h',(LS.get('lb_h')||[]).filter(h=>String(h.id)!==String(id)));rHist();toast('Removido.');}
 
@@ -1841,7 +1892,7 @@ let pH=null;
 function trgH(sku,nome,changes){
   pH={sku,nome,changes};
   document.getElementById('hcsku').textContent=sku+' — '+nome;
-  document.getElementById('hcch').innerHTML=changes.map(c=>`<div class="flex fc g8" style="margin-bottom:6px;"><span style="color:var(--text2);min-width:110px;">${c.campo}</span><span style="color:var(--red);">${c.ant}</span><span style="color:var(--text3);">→</span><span style="color:var(--green);">${c.novo}</span></div>`).join('');
+  document.getElementById('hcch').innerHTML=changes.map(c=>`<div class="flex fc g8" style="margin-bottom:6px;"><span style="color:var(--text2);min-width:110px;">${c.campo}</span><span style="color:var(--red);">R$ ${fn(c.ant)}</span><span style="color:var(--text3);">→</span><span style="color:var(--green);">R$ ${fn(c.novo)}</span></div>`).join('');
   document.getElementById('mhist').classList.add('open');
 }
 function confH(){
@@ -1851,9 +1902,9 @@ function confH(){
   const prod=ps.find(p=>p.sku===pH.sku);
   const tipo=prod?prod.tipo:'';
   pH.changes.forEach(c=>{
-    const a=parseFloat((c.ant||'').replace(/[^\d.]/g,''))||0,n=parseFloat((c.novo||'').replace(/[^\d.]/g,''))||0;
+    const a=parseFloat(c.ant)||0,n=parseFloat(c.novo)||0;
     const vp=a>0?((n-a)/a*100).toFixed(2):'—';
-    h.push({id:Date.now()+Math.random(),data:td(),sku:pH.sku,nome:pH.nome,tipo,campo:c.campo,ant:c.ant,novo:c.novo,var:vp!=='—'?(n>=a?'+':'')+vp+'%':'—',user:CU.user});
+    h.push({id:Date.now()+Math.random(),data:td(),sku:pH.sku,nome:pH.nome,tipo,campo:c.campo,ant:a,novo:n,var:vp!=='—'?(n>=a?'+':'')+vp+'%':'—',user:CU.user});
   });
   LS.set('lb_h',h);pH=null;cM('mhist');toast('Registrado no histórico!');
 }
@@ -1862,13 +1913,13 @@ function confH(){
 let rapT='meli';
 function setRap(t){
   rapT=t;
-  ['meli','shp','amz'].forEach(x=>{const el=document.getElementById('rt-'+x);if(el)el.className='btn'+(x===t?' btn-p':'');});
-  const iM=t==='meli',iS=t==='shp';
+  ['meli','shp','tkt','amz'].forEach(x=>{const el=document.getElementById('rt-'+x);if(el)el.className='btn'+(x===t?' btn-p':'');});
+  const iM=t==='meli',iS=t==='shp',iT=t==='tkt';
   const rpw=document.getElementById('rpw');if(rpw)rpw.style.display=iM?'block':'none';
-  const rfl=document.getElementById('rfl');if(rfl)rfl.textContent=(iM||iS)?'Frete (automático)':'Frete (R$)';
+  const rfl=document.getElementById('rfl');if(rfl)rfl.textContent=iM?'Frete (automático)':iS?'Frete (automático)':iT?'Frete (R$ 4,00 padrão)':'Frete (R$)';
   const rf=document.getElementById('rf');if(rf){rf.readOnly=(iM||iS);rf.style.opacity=(iM||iS)?'0.5':'1';}
   const rtEl=document.getElementById('rt');if(rtEl){rtEl.readOnly=iS;rtEl.style.opacity=iS?'0.5':'1';}
-  const rtLbl=document.getElementById('rtlbl');if(rtLbl)rtLbl.textContent=iS?'Tarifa % (automático)':'Tarifa %';
+  const rtLbl=document.getElementById('rtlbl');if(rtLbl)rtLbl.textContent=iS?'Tarifa % (automático)':iT?'Tarifa % (padrão 6%)':'Tarifa %';
   cRap();
 }
 function cRap(){
@@ -1880,6 +1931,10 @@ function cRap(){
     const sc=fShp(preco);tar=sc.tar/100;frete=sc.frete;
     const rf=document.getElementById('rf');if(rf)rf.value=preco?fn(frete):'';
     const rt=document.getElementById('rt');if(rt)rt.value=preco?(sc.tar):'';
+  } else if(rapT==='tkt'){
+    tar=g('rt')>0?g('rt')/100:0.06;frete=g('rf')||4;
+    const rf=document.getElementById('rf');if(rf&&!rf.value)rf.value=fn(4);
+    const rt=document.getElementById('rt');if(rt&&!rt.value)rt.value='6';
   } else {
     tar=g('rt')/100;
     frete=rapT==='meli'?fM(peso,preco):g('rf');
@@ -2380,10 +2435,10 @@ function openGrafCusto(sku,mk){
   let pontos=[];
   if(hist.length>0){
     // Primeiro ponto = custo anterior da primeira alteração
-    const primeiroAnt=parseFloat((hist[0].ant||'').replace(/[^\d.]/g,''))||0;
+    const primeiroAnt=parseFloat(h.ant)||0;
     if(primeiroAnt)pontos.push({label:'Inicial',val:primeiroAnt});
     hist.forEach(function(h){
-      const v=parseFloat((h.novo||'').replace(/[^\d.]/g,''))||0;
+      const v=parseFloat(h.novo)||0;
       if(v)pontos.push({label:h.data?h.data.split('-').reverse().join('/'):h.data,val:v});
     });
   }
@@ -2472,10 +2527,10 @@ function delProd(){
   LS.set('lb_p',ps.filter(x=>x.id!==ePid));
   // Limpar dados de marketplace e obs
   const mkt=LS.get('lb_m')||{};
-  ['meli','shp','amz'].forEach(mk=>{delete mkt[mk+'_'+p.sku];});
+  ['meli','shp','tkt','amz'].forEach(mk=>{delete mkt[mk+'_'+p.sku];});
   LS.set('lb_m',mkt);
   const obs=LS.get('lb_obs')||{};
-  ['meli','shp','amz'].forEach(mk=>{delete obs[mk+'_'+p.sku];});
+  ['meli','shp','tkt','amz'].forEach(mk=>{delete obs[mk+'_'+p.sku];});
   LS.set('lb_obs',obs);
   cM('mprod');rBase();toast('Produto excluído.');
 }
@@ -2506,6 +2561,7 @@ function initDrag(tbody){
       if(screen&&screen.id==='screen-base')rBase();
       else if(screen&&screen.id==='screen-meli')rMkt('meli');
       else if(screen&&screen.id==='screen-shp')rMkt('shp');
+      else if(screen&&screen.id==='screen-tkt')rMkt('tkt');
       else if(screen&&screen.id==='screen-amz')rMkt('amz');
     });
   });
