@@ -1421,20 +1421,6 @@ const FP_LABELS=[
 ];
 function fM(peso,preco){if(!peso||!preco)return 0;const row=FT.find(r=>peso<=r.a)||FT[FT.length-1];let fi=0;for(let i=FP.length-1;i>=0;i--){if(preco>=FP[i]){fi=i;break;}}return row.v[fi]||0;}
 
-// ── FRETE E TARIFA SHOPEE (faixas fixas) ─────────────────────────
-function fShp(preco){
-  const p=parseFloat(preco)||0;
-  if(p<=0)return{frete:0,tar:0};
-  if(p<=79.99)return{frete:4,tar:20};
-  if(p<=99.99)return{frete:16,tar:14};
-  if(p<=199.99)return{frete:20,tar:14};
-  return{frete:26,tar:14};
-}
-function fTkt(d){
-  // TikTok: frete padrão R$4 (editável), comissão padrão 6% (editável)
-  return{frete:parseFloat((d&&d.frete!=null)?d.frete:4)||4,tar:parseFloat((d&&d.tar!=null&&d.tar!==0)?d.tar:6)||6};
-}
-
 // ── UTILS ─────────────────────────────────────────────────────────
 function fn(v,d=2){return parseFloat(v||0).toFixed(d).replace('.',',');}
 function fR(v){return 'R$ '+fn(v);}
@@ -1542,14 +1528,6 @@ function initData(){
 // ── AUTH ─────────────────────────────────────────────────────────
 function doLogin(){const u=document.getElementById('liu').value.trim(),p=document.getElementById('lip').value;const f=(LS.get('lb_u')||[]).find(x=>x.user===u&&x.senha===p);if(!f){document.getElementById('lerr').style.display='block';return;}CU=f;document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';buildSB();nav('dash');}
 function doLogout(){CU=null;document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('liu').value='';document.getElementById('lip').value='';document.getElementById('lerr').style.display='none';}
-
-// ── CÁLCULOS ─────────────────────────────────────────────────────
-function calcCMV(p){const c=parseFloat(p.custo)||0,st=parseFloat(p.st)||0,ipi=(parseFloat(p.ipi)||0)/100,icms=(parseFloat(p.icms)||0)/100,temST=st>0,pis=temST?0.0925*(c+c*ipi):0.0925*(c-c*icms+c*ipi);return parseFloat((temST?(c+st+c*ipi-pis):(c+c*ipi-pis-c*icms)).toFixed(4));}
-// ICMS sobre frete no custo ajustado = 12% fixo (independente da alíquota do produto)
-function cAj(p,frete,tarP,reb,adsP,preco){const base=p.tipo==='Nacional'?calcCMV(p):(parseFloat(p.custo)||0),fr=parseFloat(frete)||0,pr=parseFloat(preco)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100;return parseFloat((base-(pr>78.99&&fr>0?fr*0.12:0)-fr*0.0925-(pr*tar-rb)*0.0925-(pr*ads)*0.0925).toFixed(4));}
-function cMarg(p,preco,frete,tarP,reb,adsP){if(!preco)return{r:'',p:''};const pr=parseFloat(preco)||0,fr=parseFloat(frete)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100,aj=cAj(p,fr,tarP,rb,adsP,pr),icmsBase=(parseFloat(p.icms)||0),icmsSaidaPct=icmsBase===0?0:(p.tipo==='Importado'?(icmsBase===12?0.155:0.185):((parseFloat(p.st)||0)>0?0.095:0.185)),icmsSaida=pr*icmsSaidaPct,pisSaida=0.0925*(pr-icmsSaida),ipiSaida=p.tipo==='Importado'?(pr*(parseFloat(p.ipi)||0)/100):0,mR=pr-aj-fr-(pr*tar-rb)-(pr*ads)-pisSaida-icmsSaida-ipiSaida;return{r:parseFloat(mR.toFixed(2)),p:parseFloat(pr>0?(mR/pr*100):0).toFixed(2)*1};}
-
-
 
 // ── SIDEBAR E NAVEGAÇÃO ───────────────────────────────────────────
 const ALL_NAV_ITEMS={
