@@ -300,6 +300,12 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
           <div class="pt">Produtos Cadastrados</div>
           <input type="text" id="busca-base" placeholder="Buscar SKU ou nome..." style="width:220px;" oninput="buscaBase(this.value)">
           <div class="ml-auto flex g8">
+            <select id="base-ordem" onchange="rBase()" style="padding:6px 10px;font-size:12px;">
+              <option value="">Ordenar por...</option>
+              <option value="nome-az">Nome A→Z</option>
+              <option value="sku-az">SKU A→Z</option>
+              <option value="sku-za">SKU Z→A</option>
+            </select>
             <button class="btn" onclick="baixarPlanilha()" title="Baixar modelo para importação em lote">&#8659; Baixar Modelo</button>
             <button class="btn" onclick="document.getElementById('mod-import').classList.add('open')" title="Importar produtos em lote">&#8657; Importar em Lote</button>
             <button class="btn btn-p" onclick="openPM()">+ Novo Produto</button>
@@ -1535,12 +1541,24 @@ document.addEventListener('click',function(e){const m=document.getElementById('m
 function rBase(){
   const ps=LS.get('lb_p')||[];
   const busca=(document.getElementById('busca-base')||{value:''}).value.toLowerCase();
+  const ordem=(document.getElementById('base-ordem')||{value:''}).value;
   const filtrados=busca?ps.filter(p=>(p.sku||'').toLowerCase().includes(busca)||(p.nome||'').toLowerCase().includes(busca)):ps;
-  const imp=filtrados.filter(p=>p.tipo==='Importado'),nac=filtrados.filter(p=>p.tipo==='Nacional');
-  const impOrd=applyOrder(imp),nacOrd=applyOrder(nac);
+  let imp=filtrados.filter(p=>p.tipo==='Importado'),nac=filtrados.filter(p=>p.tipo==='Nacional');
+  if(ordem==='nome-az'){
+    imp=imp.slice().sort((a,b)=>(a.nome||a.sku).localeCompare(b.nome||b.sku,'pt-BR'));
+    nac=nac.slice().sort((a,b)=>(a.nome||a.sku).localeCompare(b.nome||b.sku,'pt-BR'));
+  } else if(ordem==='sku-az'){
+    imp=imp.slice().sort((a,b)=>(a.sku||'').localeCompare(b.sku||'','pt-BR'));
+    nac=nac.slice().sort((a,b)=>(a.sku||'').localeCompare(b.sku||'','pt-BR'));
+  } else if(ordem==='sku-za'){
+    imp=imp.slice().sort((a,b)=>(b.sku||'').localeCompare(a.sku||'','pt-BR'));
+    nac=nac.slice().sort((a,b)=>(b.sku||'').localeCompare(a.sku||'','pt-BR'));
+  } else {
+    imp=applyOrder(imp);nac=applyOrder(nac);
+  }
   let h='';
-  if(impOrd.length){h+=`<tr class="tr-imp"><td colspan="20">Importados</td></tr>`;impOrd.forEach(p=>h+=rowB(p));}
-  if(nacOrd.length){h+=`<tr class="tr-nac"><td colspan="20">Nacionais</td></tr>`;nacOrd.forEach(p=>h+=rowB(p));}
+  if(imp.length){h+=`<tr class="tr-imp"><td colspan="20">Importados</td></tr>`;imp.forEach(p=>h+=rowB(p));}
+  if(nac.length){h+=`<tr class="tr-nac"><td colspan="20">Nacionais</td></tr>`;nac.forEach(p=>h+=rowB(p));}
   if(!h)h=`<tr><td colspan="20" class="nd">Nenhum produto encontrado</td></tr>`;
   const tb=document.getElementById('tbb-base');if(tb)tb.innerHTML=h;
   if(tb)initDrag(tb);
@@ -2022,7 +2040,7 @@ function impCarregarArquivo(input){const file=input.files[0];if(!file)return;con
 function impValidar(){
   const raw=(document.getElementById('imp-area').value||'').trim();
   if(!raw){toast('Cole ou carregue dados primeiro.','e');return;}
-  const COLS=['sku','nome','tipo','ncm','peso','custo','st','ipi','icms','meli','shp','amz','marca','categoria'];
+  const COLS=['sku','nome','tipo','ncm','peso','custo','st','ipi','icms','meli','shp','tkt','amz','marca','categoria'];
   const lines=raw.split('\n').filter(l=>l.trim());
   const validos=[],erros=[];
   lines.forEach((line,i)=>{
@@ -2054,6 +2072,7 @@ function impValidar(){
         icms:Math.max(0,pN(row.icms)),
         meli:['S','s','SIM','sim','1','true'].includes((row.meli||'').trim()),
         shp:['S','s','SIM','sim','1','true'].includes((row.shp||'').trim()),
+        tkt:['S','s','SIM','sim','1','true'].includes((row.tkt||'').trim()),
         amz:['S','s','SIM','sim','1','true'].includes((row.amz||'').trim()),
         marca:(row.marca||'').trim(),
         categoria:(row.categoria||'').trim(),
@@ -2090,19 +2109,20 @@ function impConfirmar(){
 
 // ── BAIXAR MODELO ─────────────────────────────────────────────────
 function baixarPlanilha(){
-  const cols=['SKU','Nome','Tipo (Importado/Nacional)','NCM','Peso (g)','Custo (R$)','ST (R$)','IPI (%)','PIS/COFINS (%)','ICMS (%)','Meli (S/N)','Shopee (S/N)','Amazon (S/N)','Marca','Categoria'];
-  const ex1=['BC-CD77','Cabo de Dados','Importado','8544.42.00','25','2,33','0','5','9,25','12','S','S','S','BOYU CELL','ELETRÔNICOS'];
-  const ex2=['C03-4P','Crimpador 4P','Nacional','8203.20.00','400','29,90','4,22','5','9,25','18','S','N','S','THAMETAL','ELETRÔNICOS'];
+  // Colunas espelhando exatamente a Base de Dados (sem campos calculados automaticamente)
+  const cols=['SKU','Nome','Tipo (Importado/Nacional)','NCM','Peso (g)','Custo (R$)','ST (R$)','IPI (%)','ICMS (%)','Meli (S/N)','Shopee (S/N)','TikTok (S/N)','Amazon (S/N)','Marca','Categoria'];
+  const ex1=['BC-CD77','Cabo de Dados','Importado','8544.42.00','25','2,33','0','5','12','S','S','N','S','BOYU CELL','ELETRÔNICOS'];
+  const ex2=['C03-4P','Crimpador 4P','Nacional','8203.20.00','400','29,90','4,22','5','18','S','N','N','S','THAMETAL','ELETRÔNICOS'];
   const style='border:1px solid #ccc;padding:6px 10px;font-family:Calibri;font-size:12px;';
   const hStyle='background:#1F4E79;color:#fff;font-weight:bold;'+style;
   const yStyle='background:#FFF2CC;color:#7F6000;font-weight:bold;'+style;
   const gStyle='background:#E2EFDA;color:#375623;'+style;
-  const AMARELO=new Set(['SKU','Nome','NCM','Peso (g)','Meli (S/N)','Shopee (S/N)','Amazon (S/N)','Marca','Categoria']);
+  const AMARELO=new Set(['SKU','Nome','NCM','Peso (g)','Meli (S/N)','Shopee (S/N)','TikTok (S/N)','Amazon (S/N)','Marca','Categoria']);
   function rowStyled(cells,isHeader){
     if(isHeader)return'<tr>'+cells.map(v=>`<td style="${hStyle}">${v}</td>`).join('')+'</tr>';
     return'<tr>'+cells.map((v,i)=>`<td style="${AMARELO.has(cols[i])?yStyle:gStyle}">${v}</td>`).join('')+'</tr>';
   }
-  const legenda='<tr><td colspan="15" style="background:#f0f4ff;color:#1F4E79;font-family:Calibri;font-size:11px;padding:6px 10px;border:1px solid #ccc;">🟡 Amarelo = preencha antes de importar &nbsp;&nbsp;|&nbsp;&nbsp; 🟢 Verde = já preenchido com dados reais &nbsp;&nbsp;|&nbsp;&nbsp; PIS/COFINS sempre 9,25 &nbsp;&nbsp;|&nbsp;&nbsp; IPI e ICMS em % (ex: 5 para 5%)</td></tr>';
+  const legenda='<tr><td colspan="15" style="background:#f0f4ff;color:#1F4E79;font-family:Calibri;font-size:11px;padding:6px 10px;border:1px solid #ccc;">🟡 Amarelo = preencha antes de importar &nbsp;&nbsp;|&nbsp;&nbsp; 🟢 Verde = já preenchido com dados reais &nbsp;&nbsp;|&nbsp;&nbsp; PIS/COFINS fixo 9,25% (calculado automaticamente) &nbsp;&nbsp;|&nbsp;&nbsp; IPI e ICMS em % (ex: 5 para 5%)</td></tr>';
   const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"><\/head><body><table>'+legenda+rowStyled(cols,true)+rowStyled(ex1,false)+rowStyled(ex2,false)+'<\/table><\/body><\/html>';
   const blob=new Blob(['\ufeff'+html],{type:'application/vnd.ms-excel;charset=utf-8;'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='modelo_importacao_logbox.xls';a.click();
@@ -2111,12 +2131,12 @@ function baixarPlanilha(){
 
 // ── CMV CONTÁBIL ───────────────────────────────────────────────────
 let cmvTab='imp',cmvEditSku=null,cmvEditClb=null;
+let cmvColsOcultas=JSON.parse(localStorage.getItem('lb_cmv_cols_ocultas')||'{}');
+function saveCmvColsOcultas(){try{localStorage.setItem('lb_cmv_cols_ocultas',JSON.stringify(cmvColsOcultas));}catch(e){}}
 function setCmvTab(t){cmvTab=t;const bi=document.getElementById('cmv-tab-imp'),bn=document.getElementById('cmv-tab-nac');if(bi)bi.className='btn'+(t==='imp'?' btn-p':'');if(bn)bn.className='btn'+(t==='nac'?' btn-p':'');const ip=document.getElementById('cmv-imp-panel'),np=document.getElementById('cmv-nac-panel');if(ip)ip.style.display=t==='imp'?'':'none';if(np)np.style.display=t==='nac'?'':'none';if(t==='nac')rCmvNac();}
 function initCmvClbs(){if(!LS.get('lb_clbs'))LS.set('lb_clbs',[{nome:'CLB01',data:'2025-12-27'},{nome:'CLB02',data:'2026-02-01'},{nome:'CLB03',data:null},{nome:'CLB04',data:'2026-04-09'},{nome:'CLB05',data:'2026-04-09'}]);}
 function openCmvAddClb(){const el=document.getElementById('mod-clb');if(el)el.classList.add('open');document.getElementById('clb-nome').value='';document.getElementById('clb-data').value='';}
 function saveClb(){const nome=(document.getElementById('clb-nome').value||'').trim();const data=document.getElementById('clb-data').value;if(!nome){toast('Nome obrigatório','e');return;}const clbs=LS.get('lb_clbs')||[];if(clbs.find(c=>c.nome===nome)){toast('Container já existe','e');return;}clbs.push({nome,data:data||null});LS.set('lb_clbs',clbs);cM('mod-clb');rCmv();toast('Container salvo!');}
-function delClb(i){if(!confirm('Excluir?'))return;const clbs=LS.get('lb_clbs')||[];clbs.splice(i,1);LS.set('lb_clbs',clbs);rCmv();}
-let cmvColsOcultas={};
 
 function delClb(nome){
   if(!confirm('Excluir container '+nome+'?'))return;
@@ -2133,7 +2153,7 @@ function salvarDataClb(nome,novaData){
   clbs[idx].data=novaData||null;
   LS.set('lb_clbs',clbs);rCmv();rOrganizador();toast('Data atualizada!');
 }
-function toggleCmvCol(nome){cmvColsOcultas[nome]=!cmvColsOcultas[nome];rCmv();rOrganizador();}
+function toggleCmvCol(nome){cmvColsOcultas[nome]=!cmvColsOcultas[nome];saveCmvColsOcultas();rCmv();rOrganizador();}
 function abrirOrganizador(){rOrganizador();document.getElementById('mod-organizador').classList.add('open');}
 function orgNovoClb(){cM('mod-organizador');document.getElementById('clb-nome').value='';document.getElementById('clb-data').value='';document.getElementById('mod-clb').classList.add('open');}
 function rOrganizador(){
@@ -2228,7 +2248,7 @@ function rCmv(){
     // Subheader para cada CLB
     th+='<tr><th class="th-sku"></th><th class="th-sku"></th>';
     clbsAtivos.forEach(function(){
-      th+='<th class="thg-custo-sub" style="font-size:10px;">Estoque</th>'
+      th+='<th class="thg-custo-sub" style="font-size:10px;">Qtd Recebida</th>'
         +'<th class="thg-mg" style="font-size:10px;">CMV (R$)</th>';
     });
     th+='<th class="th-sku"></th></tr>';
@@ -2248,7 +2268,7 @@ function rCmv(){
       clbsAtivos.forEach(function(cl){
         const key=p.sku+'_'+cl.nome;const d=cmvData[key];
         const nomeEsc=cl.nome.replace(/'/g,"\\'");
-        const estDisp=d?String(d.estoque):'—';
+        const estDisp=d?String(d.qtd!=null?d.qtd:'—'):'—';
         const cmvDisp=d?'R$ '+fn(d.cmvMed):'—';
         rows+='<td class="tdc" style="cursor:pointer;min-width:70px;background:#eaf4fb;" onclick="openCmvProd(\''+skuEsc+'\',\''+nomeEsc+'\')">'+estDisp+'</td>'
              +'<td class="tdc col-mg" style="cursor:pointer;min-width:100px;" onclick="openCmvProd(\''+skuEsc+'\',\''+nomeEsc+'\')">'+cmvDisp+'</td>';
@@ -2303,7 +2323,12 @@ function gerarRelatorio(){
   if(!dataRef){toast('Selecione uma data','e');return;}
   const clbs=(LS.get('lb_clbs')||[]).filter(c=>c.data&&c.data<=dataRef).sort((a,b)=>b.data.localeCompare(a.data));
   const cmvData=LS.get('lb_cmv_data')||{};
-  const psImp=(LS.get('lb_p')||[]).filter(p=>p.tipo==='Importado');
+  // Respeitar lista de SKUs do CMV (excluídos não devem aparecer)
+  const todosImp=(LS.get('lb_p')||[]).filter(p=>p.tipo==='Importado');
+  const cmvSkusSalvos=LS.get('lb_cmv_skus');
+  const psImp=cmvSkusSalvos
+    ?cmvSkusSalvos.map(s=>todosImp.find(p=>p.sku===s)).filter(Boolean)
+    :todosImp;
   const psNac=(LS.get('lb_p')||[]).filter(p=>p.tipo==='Nacional');
   const style='border:1px solid #ccc;padding:6px 10px;font-family:Calibri;font-size:11px;';
   const hStyle='background:#1F4E79;color:#fff;font-weight:bold;'+style;
@@ -2435,7 +2460,7 @@ function openGrafCusto(sku,mk){
   let pontos=[];
   if(hist.length>0){
     // Primeiro ponto = custo anterior da primeira alteração
-    const primeiroAnt=parseFloat(h.ant)||0;
+    const primeiroAnt=parseFloat(hist[0].ant)||0;
     if(primeiroAnt)pontos.push({label:'Inicial',val:primeiroAnt});
     hist.forEach(function(h){
       const v=parseFloat(h.novo)||0;
