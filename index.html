@@ -234,6 +234,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
     <div class="sb-user"><div class="sb-av" id="sbav"></div><div><div class="sb-uname" id="sbn"></div><div class="sb-urole" id="sbr"></div></div></div>
     <div class="sb-nav" id="sbnav"></div>
     <div class="sb-bot" style="display:flex;flex-direction:column;gap:6px;">
+      <div id="sb-presence" style="font-size:11px;color:var(--text3);padding:4px 0;min-height:16px;"></div>
       <button class="btn-logout" onclick="doLogout()">Sair</button>
     </div>
   </div>
@@ -416,7 +417,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
       </div>
 
       <div class="screen" id="screen-tkt">
-        <div class="ph" style="margin-bottom:8px;"><div class="pt" style="color:var(--tkt);">TikTok Shop</div><span class="tsm tmu">Comissão 6% · Frete editável (padrão R$ 4,00)</span></div>
+        <div class="ph" style="margin-bottom:8px;"><div class="pt" style="color:var(--tkt);">TikTok Shop</div><span class="tsm tmu">Frete e tarifa editáveis · Rebate editável</span></div>
         <div class="sticky-bar">
           <input type="text" id="mkt-busca-tkt" placeholder="Buscar SKU..." style="width:180px;" oninput="filtrarMkt('tkt')">
           <select id="mkt-tipo-tkt" onchange="filtrarMkt('tkt')" style="padding:6px 10px;font-size:12px;">
@@ -426,21 +427,33 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
             <option value="">Todas as marcas</option>
           </select>
           <select id="mkt-ordem-tkt" onchange="filtrarMkt('tkt')" style="padding:6px 10px;font-size:12px;">
-            <option value="sku-asc">SKU A-Z</option><option value="sku-desc">SKU Z-A</option>
+            <option value="sku-az">SKU A→Z</option><option value="sku-za">SKU Z→A</option>
             <option value="mg-desc">Margem ↓</option><option value="mg-asc">Margem ↑</option>
             <option value="preco-desc">Preço ↓</option><option value="preco-asc">Preço ↑</option>
           </select>
           <button class="btn btn-sm" onclick="limparMktFiltros('tkt')">✕ Limpar</button>
         </div><!-- /sticky-bar tkt -->
-        <div class="tbl-wrap">
-          <table class="tbl">
-            <thead><tr>
-              <th class="th-sku">SKU</th><th>Nome</th><th>Tipo</th><th>Custo</th>
-              <th>Preço</th><th>Frete</th><th>Tar%</th><th>Margem R$</th><th>Margem%</th><th>Break-even</th>
-            </tr></thead>
-            <tbody id="tbb-tkt"></tbody>
-          </table>
-        </div>
+        <div class="card card0"><div class="tw-sticky"><table>
+          <thead>
+            <tr>
+              <th rowspan="2" class="th-sku">SKU</th>
+              <th rowspan="2" class="th-sku" style="background:#e8eaf0;">Custo</th>
+              <th rowspan="2" class="thg-aj">Custo Ajustado</th>
+              <th rowspan="2" class="thg-preco">Preço de Venda</th>
+              <th rowspan="2" class="thg-frete">Frete (R$)</th>
+              <th class="thg-tarifa" colspan="3">Tarifas</th>
+              <th class="thg-ads" colspan="2">ADS</th>
+              <th class="thg-mg" colspan="2">Margem de Contribuição</th>
+              <th rowspan="2" class="th-sku">Tags / Obs</th>
+            </tr>
+            <tr>
+              <th class="thg-tarifa">%</th><th class="thg-tarifa">R$</th><th class="thg-tarifa">Rebate (R$)</th>
+              <th class="thg-ads">%</th><th class="thg-ads">R$</th>
+              <th class="thg-mg">R$</th><th class="thg-mg">%</th>
+            </tr>
+          </thead>
+          <tbody id="tbb-tkt"></tbody>
+        </table></div></div>
       </div><!-- /screen-tkt -->
 
       <div class="screen" id="screen-shp">
@@ -597,8 +610,8 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
 
       <div class="screen" id="screen-hist">
         <div class="ph" style="flex-wrap:wrap;gap:8px;">
-          <div class="pt">Histórico de Custos</div>
-          <span class="tsm tmu">Registrado automaticamente ao editar custo</span>
+          <div class="pt">Histórico</div>
+          <span class="tsm tmu">Registrado automaticamente</span>
           <div class="ml-auto flex g8 fc" style="flex-wrap:wrap;">
             <select id="hist-filtro" onchange="rHist()" style="padding:6px 10px;font-size:12px;min-width:160px;">
               <option value="">Todos os produtos</option>
@@ -615,25 +628,63 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
             <button class="btn btn-sm" onclick="limparFiltrosHist()" title="Limpar filtros">✕ Limpar</button>
           </div>
         </div>
-        <!-- Abas internas -->
-        <div class="flex g8" style="margin-bottom:14px;">
-          <button class="btn btn-p" id="htab-imp" onclick="setHistTab('imp')">Importados</button>
-          <button class="btn" id="htab-nac" onclick="setHistTab('nac')">Nacionais</button>
+        <div class="flex g8" style="margin-bottom:14px;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <button class="btn btn-p" id="htab-sec-custo" onclick="setHistSection('custo')">📦 Custos</button>
+          <button class="btn" id="htab-sec-preco" onclick="setHistSection('preco')">🏷️ Preços de Venda</button>
+          <button class="btn" id="htab-sec-reb" onclick="setHistSection('reb')">💰 Rebate</button>
         </div>
-        <div class="card card0"><div class="tw"><table>
-          <thead><tr>
-            <th class="th-sku" style="width:110px;">Data</th>
-            <th class="th-sku">SKU</th>
-            <th class="th-sku" style="text-align:left;">Nome</th>
-            <th class="th-sku">Tipo</th>
-            <th style="background:#fee2e2;color:#7a1a1e;">Custo Anterior</th>
-            <th style="background:#dcfce7;color:#14532d;">Custo Novo</th>
-            <th class="thg-res">Variação</th>
-            <th class="th-sku">Usuário</th>
-            <th class="th-sku">Excluir</th>
-          </tr></thead>
-          <tbody id="tbb-hist"></tbody>
-        </table></div></div>
+        <div id="hist-panel-custo">
+          <div class="flex g8" style="margin-bottom:12px;">
+            <button class="btn btn-p" id="htab-imp" onclick="setHistTab('imp')">Importados</button>
+            <button class="btn" id="htab-nac" onclick="setHistTab('nac')">Nacionais</button>
+          </div>
+          <div class="card card0"><div class="tw"><table>
+            <thead><tr>
+              <th class="th-sku" style="width:110px;">Data</th>
+              <th class="th-sku">SKU</th>
+              <th class="th-sku" style="text-align:left;">Nome</th>
+              <th class="th-sku">Tipo</th>
+              <th style="background:#fee2e2;color:#7a1a1e;">Custo Anterior</th>
+              <th style="background:#dcfce7;color:#14532d;">Custo Novo</th>
+              <th class="thg-res">Variação</th>
+              <th class="th-sku">Usuário</th>
+              <th class="th-sku">Excluir</th>
+            </tr></thead>
+            <tbody id="tbb-hist"></tbody>
+          </table></div></div>
+        </div>
+        <div id="hist-panel-preco" style="display:none;">
+          <div class="card card0"><div class="tw"><table>
+            <thead><tr>
+              <th class="th-sku" style="width:110px;">Data</th>
+              <th class="th-sku">SKU</th>
+              <th class="th-sku" style="text-align:left;">Nome</th>
+              <th class="th-sku">Marketplace</th>
+              <th style="background:#fee2e2;color:#7a1a1e;">Preço Anterior</th>
+              <th style="background:#dcfce7;color:#14532d;">Preço Novo</th>
+              <th class="thg-res">Variação</th>
+              <th class="th-sku">Usuário</th>
+              <th class="th-sku">Excluir</th>
+            </tr></thead>
+            <tbody id="tbb-hist-preco"></tbody>
+          </table></div></div>
+        </div>
+        <div id="hist-panel-reb" style="display:none;">
+          <div class="card card0"><div class="tw"><table>
+            <thead><tr>
+              <th class="th-sku" style="width:110px;">Data</th>
+              <th class="th-sku">SKU</th>
+              <th class="th-sku" style="text-align:left;">Nome</th>
+              <th class="th-sku">Marketplace</th>
+              <th style="background:#fee2e2;color:#7a1a1e;">Rebate Anterior</th>
+              <th style="background:#dcfce7;color:#14532d;">Rebate Novo</th>
+              <th class="thg-res">Variação</th>
+              <th class="th-sku">Usuário</th>
+              <th class="th-sku">Excluir</th>
+            </tr></thead>
+            <tbody id="tbb-hist-reb"></tbody>
+          </table></div></div>
+        </div>
       </div>
 
       <div class="screen" id="screen-cmv">
@@ -897,9 +948,27 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
     <div class="sl">Gerar Variação (Kit)</div>
     <div class="flex fc g8">
       <input type="number" id="kit-qtd" min="2" max="100" step="1" placeholder="Quantidade (ex: 2, 3...)" style="width:200px;">
-      <button class="btn btn-p" onclick="gerarKit()">+ Gerar Kit</button>
+      <button class="btn btn-p" onclick="abrirModalKit()">+ Gerar Kit</button>
     </div>
     <div class="mf"><button class="btn" onclick="cM('mod-det')">Fechar</button></div>
+  </div>
+</div>
+
+<!-- MODAL KIT - SELEÇÃO DE MARKETPLACES -->
+<div class="mov" id="mod-kit">
+  <div class="mod" style="width:380px;">
+    <div class="mt">Gerar Kit — Selecionar Marketplaces</div>
+    <p class="tmu tsm" style="margin-bottom:14px;">Selecione em quais marketplaces o kit será ativado:</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;border:1px solid var(--border);border-radius:var(--r);"><input type="checkbox" id="kit-mk-meli"> <span style="color:var(--meli);font-weight:700;">Mercado Livre</span></label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;border:1px solid var(--border);border-radius:var(--r);"><input type="checkbox" id="kit-mk-shp"> <span style="color:var(--shp);font-weight:700;">Shopee</span></label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;border:1px solid var(--border);border-radius:var(--r);"><input type="checkbox" id="kit-mk-tkt"> <span style="font-weight:700;">TikTok Shop</span></label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;padding:8px;border:1px solid var(--border);border-radius:var(--r);"><input type="checkbox" id="kit-mk-amz"> <span style="color:var(--amz);font-weight:700;">Amazon</span></label>
+    </div>
+    <div class="mf">
+      <button class="btn" onclick="cM('mod-kit')">Cancelar</button>
+      <button class="btn btn-p" onclick="gerarKit()">+ Confirmar Kit</button>
+    </div>
   </div>
 </div>
 
@@ -1171,7 +1240,7 @@ async function sbPersist(k, v) {
         await SB.from('historico_custos').insert({
           sku: h.sku, nome: h.nome, campo: h.campo||'custo',
           valor_anterior: h.ant, valor_novo: h.novo,
-          alterado_por: h.user, alterado_em: h.data ? new Date(h.data).toISOString() : new Date().toISOString()
+          alterado_por: h.user, alterado_em: h.data ? new Date(h.data+'T12:00:00').toISOString() : new Date().toISOString()
         });
       }
     }
@@ -1250,7 +1319,7 @@ async function sbPersist(k, v) {
         await SB.from('historico_precos').insert({
           sku: h.sku, nome: h.nome||'', campo: h.campo, marketplace: h.mk,
           valor_anterior: h.ant, valor_novo: h.novo,
-          alterado_por: h.user, alterado_em: h.data ? new Date(h.data).toISOString() : new Date().toISOString()
+          alterado_por: h.user, alterado_em: h.data ? new Date(h.data+'T12:00:00').toISOString() : new Date().toISOString()
         });
       }
     }
@@ -1262,11 +1331,12 @@ async function sbLoad() {
   try {
     showLoadingOverlay('Conectando ao banco de dados...');
 
-    const [rProd, rUsers, rMkt, rHist, rMarcas, rCats, rObs, rClbs, rCmvSkus, rConfig] = await Promise.all([
+    const [rProd, rUsers, rMkt, rHist, rHistPrecos, rMarcas, rCats, rObs, rClbs, rCmvSkus, rConfig] = await Promise.all([
       SB.from('produtos').select('*'),
       SB.from('usuarios').select('*'),
       SB.from('marketplace_dados').select('*'),
       SB.from('historico_custos').select('*').order('alterado_em', { ascending: false }),
+      SB.from('historico_precos').select('*').order('alterado_em', { ascending: false }),
       SB.from('marcas').select('nome'),
       SB.from('categorias').select('nome'),
       SB.from('observacoes').select('*'),
@@ -1308,13 +1378,31 @@ async function sbLoad() {
       _cache['lb_m'] = mkt;
     }
 
-    // Histórico
+    // Histórico de custos — recalcula var pois não é salvo no Supabase
     if (rHist.data?.length) {
-      _cache['lb_h'] = rHist.data.map(h => ({
-        id: h.id, sku: h.sku, nome: h.nome||'', campo: h.campo,
-        ant: h.valor_anterior, novo: h.valor_novo,
-        user: h.alterado_por||'', data: h.alterado_em ? h.alterado_em.substring(0,10) : ''
-      }));
+      _cache['lb_h'] = rHist.data.map(h => {
+        const ant = parseFloat(h.valor_anterior)||0;
+        const novo = parseFloat(h.valor_novo)||0;
+        const vp = ant > 0 ? ((novo-ant)/ant*100).toFixed(2) : '—';
+        return {
+          id: h.id, sku: h.sku, nome: h.nome||'', campo: h.campo||'Custo',
+          ant, novo, var: vp!=='—'?(novo>=ant?'+':'')+vp+'%':'—',
+          user: h.alterado_por||'', data: h.alterado_em ? h.alterado_em.substring(0,10) : ''
+        };
+      });
+    }
+    // Histórico de preços e rebate
+    if (rHistPrecos.data?.length) {
+      _cache['lb_hp'] = rHistPrecos.data.map(h => {
+        const ant = parseFloat(h.valor_anterior)||0;
+        const novo = parseFloat(h.valor_novo)||0;
+        const vp = ant > 0 ? ((novo-ant)/ant*100).toFixed(2) : '—';
+        return {
+          id: h.id, sku: h.sku, nome: h.nome||'', campo: h.campo||'Preço de Venda',
+          mk: h.marketplace||'', ant, novo, var: vp!=='—'?(novo>=ant?'+':'')+vp+'%':'—',
+          user: h.alterado_por||'', data: h.alterado_em ? h.alterado_em.substring(0,10) : ''
+        };
+      });
     }
 
     // Marcas e Categorias
@@ -1479,7 +1567,7 @@ function initData(){
   if(!LS.get('lb_h'))LS.set('lb_h',[]);
   if(!LS.get('lb_obs'))LS.set('lb_obs',{});
   if(!LS.get('lb_cmv_data'))LS.set('lb_cmv_data',{});
-  if(!LS.get('lb_clbs'))LS.set('lb_clbs',[{nome:'CLB01',data:'2025-12-27'},{nome:'CLB02',data:'2026-02-01'},{nome:'CLB03',data:null},{nome:'CLB04',data:'2026-04-09'},{nome:'CLB05',data:'2026-04-09'}]);
+  // lb_clbs gerenciado por initCmvClbs() com verificação robusta
   // Migração: atualizar dados incompletos com mapeamento por prefixo
   try{
     const ps=LS.get('lb_p');
@@ -1527,7 +1615,7 @@ function initData(){
 
 // ── AUTH ─────────────────────────────────────────────────────────
 function doLogin(){const u=document.getElementById('liu').value.trim(),p=document.getElementById('lip').value;const f=(LS.get('lb_u')||[]).find(x=>x.user===u&&x.senha===p);if(!f){document.getElementById('lerr').style.display='block';return;}CU=f;document.getElementById('login-screen').style.display='none';document.getElementById('app').style.display='flex';buildSB();nav('dash');}
-function doLogout(){CU=null;document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('liu').value='';document.getElementById('lip').value='';document.getElementById('lerr').style.display='none';}
+function doLogout(){if(_rtChannel){_rtChannel.unsubscribe();_rtChannel=null;}if(_presenceChannel){_presenceChannel.unsubscribe();_presenceChannel=null;}CU=null;document.getElementById('login-screen').style.display='flex';document.getElementById('app').style.display='none';document.getElementById('liu').value='';document.getElementById('lip').value='';document.getElementById('lerr').style.display='none';}
 
 // ── SIDEBAR E NAVEGAÇÃO ───────────────────────────────────────────
 const ALL_NAV_ITEMS={
@@ -1539,7 +1627,7 @@ const ALL_NAV_ITEMS={
   tkt:{id:'tkt',lbl:'TikTok Shop',dot:'var(--tkt)',sub:true},
   rap:{id:'rap',lbl:'Precificação Rápida',dot:'var(--purple)'},
   cmv:{id:'cmv',lbl:'CMV Contábil',dot:'var(--text3)',sub:true},
-  hist:{id:'hist',lbl:'Histórico de Custos',dot:'var(--purple)',sub:true},
+  hist:{id:'hist',lbl:'Histórico',dot:'var(--purple)',sub:true},
   admin:{id:'admin',lbl:'Usuários',dot:'var(--red)'},
 };
 const MKT_IDS=['meli','amz','shp','tkt'];
@@ -1551,6 +1639,8 @@ function buildSB(){
   av.style.background=CU.perfil==='admin'?'#1f6feb':'#6d28d9';
   document.getElementById('sbn').textContent=CU.nome;
   document.getElementById('sbr').textContent=CU.perfil==='admin'?'Administrador':'Usuário Personalizado';
+  // Iniciar realtime e presença após login
+  setTimeout(()=>{initRealtime();initPresence();},500);
   let items=[];
   if(CU.perfil==='admin'){
     items=[ALL_NAV_ITEMS.dash,ALL_NAV_ITEMS.base,{sec:'Marketplaces'},ALL_NAV_ITEMS.meli,ALL_NAV_ITEMS.amz,ALL_NAV_ITEMS.shp,ALL_NAV_ITEMS.tkt,ALL_NAV_ITEMS.rap,{sec:'Financeiro'},ALL_NAV_ITEMS.cmv,ALL_NAV_ITEMS.hist,{sec:'Administração'},ALL_NAV_ITEMS.admin,{id:'fiscal',lbl:'Config. Fiscais',dot:'#a16207'}];
@@ -1567,9 +1657,11 @@ function buildSB(){
   document.getElementById('sbnav').innerHTML=items.map(it=>{if(it.sec)return`<div class="nav-sec">${it.sec}</div>`;return`<div class="ni${it.sub?' sub':''}" id="ni-${it.id}" onclick="nav('${it.id}')"><span class="ndot" style="background:${it.dot};"></span>${it.lbl}</div>`;}).join('');
 }
 
-const TBM={dash:{t:'Dashboard',b:'',bs:''},base:{t:'Base de Dados',b:'Fonte única de custo',bs:'background:#0a1929;color:#60a5fa;'},meli:{t:'Mercado Livre',b:'Marketplace',bs:'background:var(--mlbg);color:var(--meli);'},shp:{t:'Shopee',b:'Marketplace',bs:'background:var(--shpbg);color:var(--shp);'},amz:{t:'Amazon',b:'Marketplace',bs:'background:var(--amzbg);color:var(--amz);'},rap:{t:'Precificação Rápida',b:'Simulador',bs:'background:var(--purpbg);color:var(--purple);'},hist:{t:'Histórico de Custos',b:'Automático',bs:'background:var(--purpbg);color:var(--purple);'},cmv:{t:'CMV Contábil',b:'Por Container',bs:'background:var(--purpbg);color:var(--purple);'},admin:{t:'Usuários',b:'Admin',bs:'background:var(--rbg);color:var(--red);'},fiscal:{t:'Configurações Fiscais',b:'Admin',bs:'background:#fef9c3;color:#a16207;'}};
+const TBM={dash:{t:'Dashboard',b:'',bs:''},base:{t:'Base de Dados',b:'Fonte única de custo',bs:'background:#0a1929;color:#60a5fa;'},meli:{t:'Mercado Livre',b:'Marketplace',bs:'background:var(--mlbg);color:var(--meli);'},shp:{t:'Shopee',b:'Marketplace',bs:'background:var(--shpbg);color:var(--shp);'},amz:{t:'Amazon',b:'Marketplace',bs:'background:var(--amzbg);color:var(--amz);'},rap:{t:'Precificação Rápida',b:'Simulador',bs:'background:var(--purpbg);color:var(--purple);'},hist:{t:'Histórico',b:'Custos · Preços · Rebate',bs:'background:var(--purpbg);color:var(--purple);'},cmv:{t:'CMV Contábil',b:'Por Container',bs:'background:var(--purpbg);color:var(--purple);'},admin:{t:'Usuários',b:'Admin',bs:'background:var(--rbg);color:var(--red);'},fiscal:{t:'Configurações Fiscais',b:'Admin',bs:'background:#fef9c3;color:#a16207;'}};
 
 function nav(id){
+  // Guardar acesso: admin e fiscal apenas para admin
+  if((id==='admin'||id==='fiscal')&&CU&&CU.perfil!=='admin'){toast('Sem permissão de acesso','e');return;}
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('act','act-meli','act-shp','act-amz'));
   const sc=document.getElementById('screen-'+id);if(sc)sc.classList.add('active');
@@ -1583,7 +1675,7 @@ function nav(id){
   if(id==='shp')rMkt('shp');
   if(id==='tkt')rMkt('tkt');
   if(id==='amz')rMkt('amz');
-  if(id==='hist')setHistTab('imp');
+  if(id==='hist'){setHistTab('imp');setHistSection('custo');}
   if(id==='cmv'){initCmvClbs();rCmv();}
   if(id==='admin')rAdmin();
   if(id==='rap')setRap('meli');
@@ -1868,6 +1960,8 @@ function openPM(id){
 }
 
 function saveProd(){
+  if(!CU){toast('Sessão inválida','e');return;}
+  const isAdmin=CU.perfil==='admin';
   const sku=document.getElementById('fps').value.trim();
   const nome=document.getElementById('fpn').value.trim();
   const ncm=document.getElementById('fpncm').value.trim();
@@ -1963,7 +2057,7 @@ function rowM(p,mk){
     const shpCalc=fShp(preco);
     frete=shpCalc.frete;
     tar=shpCalc.tar;
-    reb=0;
+    reb=parseFloat(d.reb)||0;
     ads=parseFloat(d.ads)||0;
     // Salvar tar e frete calculados para consistência
     if(preco){const mk2=LS.get('lb_m')||{};const k='shp_'+p.sku;if(!mk2[k])mk2[k]={};mk2[k].tar=tar;mk2[k].frete=frete;LS.set('lb_m',mk2);}
@@ -1971,7 +2065,7 @@ function rowM(p,mk){
     const tktCalc=fTkt(d);
     frete=tktCalc.frete;
     tar=tktCalc.tar;
-    reb=0;
+    reb=parseFloat(d.reb)||0;
     ads=parseFloat(d.ads)||0;
   } else {
     frete=isMeli?fM(p.peso,preco):(parseFloat(d.frete)||0);
@@ -1999,10 +2093,8 @@ function rowM(p,mk){
   const tarCell=isShp
     ?`<td class="tdc col-tarifa" id="cell-tar-${mk}-${p.sku}">${pc(tar)}</td>`
     :editCell('tar-'+mk+'-'+p.sku,isTkt?(d.tar||6):(d.tar||0),'pct','tar','64px','col-tarifa');
-  // Célula rebate: Shopee e TikTok=oculto (sem rebate), outros=editável
-  const rebCell=(isShp||isTkt)
-    ?`<td class="tdc col-tarifa">—</td>`
-    :editCell('reb-'+mk+'-'+p.sku,d.reb||0,'val','reb','80px','col-tarifa');
+  // Célula rebate: todos editável (Shopee e TikTok agora suportam rebate)
+  const rebCell=editCell('reb-'+mk+'-'+p.sku,d.reb||0,'val','reb','80px','col-tarifa');
   return`<tr id="mr-${mk}-${p.sku}" data-sku="${p.sku}">
     <td class="tdc" onclick="openDet('${p.sku}','${mk}')" style="cursor:pointer;text-decoration:underline dotted;color:var(--accent2);font-weight:700;">${p.sku}</td>
     <td class="tdc" style="cursor:pointer;" onclick="openGrafCusto('${p.sku}','${mk}')" title="Ver histórico de custo">${p.tipo==='Nacional'?fR(cmvNac):fR(p.custo)}</td>
@@ -2029,11 +2121,14 @@ function ativaEdit(cellId,field,sku,mk,fmt){
   function finish(){
     const v=parseFloat(inp.value)||0;
     // Campos que exigem confirmação: preço e rebate
-    if((field==='preco'||field==='reb')&&v!==cur&&v>0){
+    if((field==='preco'||field==='reb')&&v!==cur){
       const nomeCampo=field==='preco'?'Preço de Venda':'Rebate';
       const escolha=confirm(`${nomeCampo} alterado de ${fR(cur)} → ${fR(v)}.\n\nClicar OK = Definitivo (salva e registra histórico)\nClicar Cancelar = Teste (aplica na tela mas não salva)`);
       if(escolha){
         sM(sku,mk,field,v);
+        // Remover modo teste visual se estava ativo
+        const rowElS=document.getElementById('mr-'+mk+'-'+sku);
+        if(rowElS){rowElS.style.background='';rowElS.dataset.testMode='';}
         // Registrar no histórico de preços
         const hpKey='lb_hp';
         const hp=LS.get(hpKey)||[];
@@ -2042,8 +2137,13 @@ function ativaEdit(cellId,field,sku,mk,fmt){
         LS.set(hpKey,hp);
         toast(`${nomeCampo} salvo e registrado!`);
       } else {
-        // Modo teste: aplica visualmente sem salvar
+        // Modo teste: aplica visualmente sem salvar — colore linha amarela até próxima edição
         toast('Modo teste — não salvo','e');
+        const rowEl=document.getElementById('mr-'+mk+'-'+sku);
+        if(rowEl){
+          rowEl.style.background='#fef9c3';
+          rowEl.dataset.testMode='1';
+        }
       }
       const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
       lU(sku,mk);
@@ -2054,7 +2154,14 @@ function ativaEdit(cellId,field,sku,mk,fmt){
     lU(sku,mk);
   }
   inp.addEventListener('blur',finish);
-  inp.addEventListener('keydown',e=>{if(e.key==='Enter')inp.blur();if(e.key==='Escape')cell.textContent=(cur?(fmt==='pct'?pc(cur):fR(cur)):'—');});
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){inp.blur();return;}
+    if(e.key==='Escape'){
+      cell.textContent=(cur?(fmt==='pct'?pc(cur):fR(cur)):'—');
+      // Recalcular linha com valor original após cancelar
+      lU(sku,mk);
+    }
+  });
 }
 
 function lU(sku,mk){
@@ -2088,6 +2195,23 @@ function lU(sku,mk){
 
 // ── HISTÓRICO ──────────────────────────────────────────────────────
 let histTab='imp';
+let histSection='custo';
+
+function setHistSection(s){
+  histSection=s;
+  ['custo','preco','reb'].forEach(x=>{
+    const b=document.getElementById('htab-sec-'+x);
+    if(b)b.className='btn'+(x===s?' btn-p':'');
+  });
+  const pc=document.getElementById('hist-panel-custo');
+  const pp=document.getElementById('hist-panel-preco');
+  const pr=document.getElementById('hist-panel-reb');
+  if(pc)pc.style.display=s==='custo'?'':'none';
+  if(pp)pp.style.display=s==='preco'?'':'none';
+  if(pr)pr.style.display=s==='reb'?'':'none';
+  rHist();
+}
+
 function setHistTab(t){
   histTab=t;
   const bi=document.getElementById('htab-imp'),bn=document.getElementById('htab-nac');
@@ -2095,8 +2219,16 @@ function setHistTab(t){
   if(bn)bn.className='btn'+(t==='nac'?' btn-p':'');
   rHist();
 }
-function limparFiltrosHist(){['hist-filtro','hist-de','hist-ate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});const o=document.getElementById('hist-ordem');if(o)o.value='recente';rHist();}
+
+function limparFiltrosHist(){
+  ['hist-filtro','hist-de','hist-ate'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const o=document.getElementById('hist-ordem');if(o)o.value='recente';
+  rHist();
+}
+
 function rHist(){
+  if(histSection==='preco'){rHistPrecos();return;}
+  if(histSection==='reb'){rHistReb();return;}
   const filtro=document.getElementById('hist-filtro');
   const de=(document.getElementById('hist-de')||{value:''}).value;
   const ate=(document.getElementById('hist-ate')||{value:''}).value;
@@ -2114,9 +2246,70 @@ function rHist(){
   else if(ordem==='sku-az')h.sort((a,b)=>(a.sku||'').localeCompare(b.sku||''));
   else if(ordem==='sku-za')h.sort((a,b)=>(b.sku||'').localeCompare(a.sku||''));
   const tb=document.getElementById('tbb-hist');
-  if(tb)tb.innerHTML=h.length?h.map(x=>{const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');const tipo=x.tipo||(tipoMap[x.sku]||'—');const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc"><span class="chip ${tipo==='Importado'?'ci':'cna'}">${tipo}</span></td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant!=null&&x.ant!==''?'R$ '+fn(x.ant):'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo!=null&&x.novo!==''?'R$ '+fn(x.novo):'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHist('${x.id}')">Excluir</button></td></tr>`;}).join(''):`<tr><td colspan="9" class="nd">Nenhum registro encontrado.</td></tr>`;
+  if(tb)tb.innerHTML=h.length?h.map(x=>{
+    const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');
+    const tipo=x.tipo||(tipoMap[x.sku]||'—');
+    const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';
+    return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc"><span class="chip ${tipo==='Importado'?'ci':'cna'}">${tipo}</span></td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant!=null?'R$ '+fn(x.ant):'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo!=null?'R$ '+fn(x.novo):'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHist('${x.id}')">Excluir</button></td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="nd">Nenhum registro encontrado.</td></tr>`;
 }
-function delHist(id){if(!confirm('Excluir?'))return;LS.set('lb_h',(LS.get('lb_h')||[]).filter(h=>String(h.id)!==String(id)));rHist();toast('Removido.');}
+
+function rHistPrecos(){
+  const de=(document.getElementById('hist-de')||{value:''}).value;
+  const ate=(document.getElementById('hist-ate')||{value:''}).value;
+  const ordem=(document.getElementById('hist-ordem')||{value:'recente'}).value;
+  const mkNomes={meli:'Mercado Livre',shp:'Shopee',tkt:'TikTok',amz:'Amazon'};
+  let h=(LS.get('lb_hp')||[]).filter(x=>x.campo==='Preço de Venda');
+  if(de)h=h.filter(x=>x.data&&x.data>=de);
+  if(ate)h=h.filter(x=>x.data&&x.data<=ate);
+  if(ordem==='recente')h.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  else if(ordem==='antigo')h.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  else if(ordem==='sku-az')h.sort((a,b)=>(a.sku||'').localeCompare(b.sku||''));
+  else if(ordem==='sku-za')h.sort((a,b)=>(b.sku||'').localeCompare(a.sku||''));
+  const tb=document.getElementById('tbb-hist-preco');
+  if(tb)tb.innerHTML=h.length?h.map(x=>{
+    const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');
+    const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';
+    return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc">${mkNomes[x.mk]||x.mk||'—'}</td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant!=null?'R$ '+fn(x.ant):'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo!=null?'R$ '+fn(x.novo):'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHistPreco('${x.id}')">Excluir</button></td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="nd">Nenhum registro de preço encontrado.</td></tr>`;
+}
+
+function rHistReb(){
+  const de=(document.getElementById('hist-de')||{value:''}).value;
+  const ate=(document.getElementById('hist-ate')||{value:''}).value;
+  const ordem=(document.getElementById('hist-ordem')||{value:'recente'}).value;
+  const mkNomes={meli:'Mercado Livre',shp:'Shopee',tkt:'TikTok',amz:'Amazon'};
+  let h=(LS.get('lb_hp')||[]).filter(x=>x.campo==='Rebate');
+  if(de)h=h.filter(x=>x.data&&x.data>=de);
+  if(ate)h=h.filter(x=>x.data&&x.data<=ate);
+  if(ordem==='recente')h.sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  else if(ordem==='antigo')h.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  else if(ordem==='sku-az')h.sort((a,b)=>(a.sku||'').localeCompare(b.sku||''));
+  else if(ordem==='sku-za')h.sort((a,b)=>(b.sku||'').localeCompare(a.sku||''));
+  const tb=document.getElementById('tbb-hist-reb');
+  if(tb)tb.innerHTML=h.length?h.map(x=>{
+    const pos=x.var&&x.var.startsWith('+'),neg=x.var&&x.var.startsWith('-');
+    const dataFmt=x.data?x.data.split('-').reverse().join('/'):'—';
+    return`<tr><td class="tdc tmu">${dataFmt}</td><td class="tdc"><strong>${x.sku}</strong></td><td class="tdl">${x.nome||'—'}</td><td class="tdc">${mkNomes[x.mk]||x.mk||'—'}</td><td class="tdc" style="color:var(--red);font-weight:700;">${x.ant!=null?'R$ '+fn(x.ant):'—'}</td><td class="tdc" style="color:var(--green);font-weight:700;">${x.novo!=null?'R$ '+fn(x.novo):'—'}</td><td class="tdc ${pos?'hp':neg?'hn':''}" style="font-weight:700;">${x.var||'—'}</td><td class="tdc tmu">${x.user||'—'}</td><td class="tdc"><button class="btn btn-sm btn-d" onclick="delHistPreco('${x.id}')">Excluir</button></td></tr>`;
+  }).join(''):`<tr><td colspan="9" class="nd">Nenhum registro de rebate encontrado.</td></tr>`;
+}
+
+function delHist(id){
+  if(!confirm('Excluir este registro? A ação não pode ser desfeita.'))return;
+  LS.set('lb_h',(LS.get('lb_h')||[]).filter(h=>String(h.id)!==String(id)));
+  SB.from('historico_custos').delete().eq('id',id).then(({error})=>{
+    if(error)console.warn('Erro ao deletar histórico Supabase:',error);
+  });
+  rHist();toast('Removido.');
+}
+function delHistPreco(id){
+  if(!confirm('Excluir este registro? A ação não pode ser desfeita.'))return;
+  LS.set('lb_hp',(LS.get('lb_hp')||[]).filter(h=>String(h.id)!==String(id)));
+  SB.from('historico_precos').delete().eq('id',id).then(({error})=>{
+    if(error)console.warn('Erro ao deletar histórico preço Supabase:',error);
+  });
+  rHist();toast('Removido.');
+}
 
 let pH=null;
 function trgH(sku,nome,changes){
@@ -2175,8 +2368,9 @@ function cRap(){
   const rcaj=document.getElementById('rcaj');if(rcaj)rcaj.textContent=custo?fR(aj):'R$ —';
   if(!preco){['rmr','rmp'].forEach(id=>{const el=document.getElementById(id);if(el){el.textContent=id==='rmr'?'R$ —':'— %';el.style.color='var(--text3)';}});return;}
   const icmsBase=g('ricms');
-  const icmsSaidaPct=icmsBase===0?0:(icmsBase===12?0.155:0.185);
-  const icmsSaida=preco*icmsSaidaPct,pisSaida=0.0925*(preco-icmsSaida);
+  const fc2=getFC();
+  const icmsSaidaPct=icmsBase===0?0:(icmsBase===12?(fc2.icmsImp12||15.5)/100:(fc2.icmsImp18||18.5)/100);
+  const icmsSaida=preco*icmsSaidaPct,pisSaida=(fc2.pisSaida||9.25)/100*(preco-icmsSaida);
   const ipiSaida=preco*ipi;
   const tarifaLiq=(preco*tar)-reb;
   const mR=preco-aj-frete-tarifaLiq-(preco*ads)-pisSaida-icmsSaida-ipiSaida;
@@ -2197,10 +2391,12 @@ function openDet(sku,mk){
   const tar=parseFloat(d.tar)||0,reb=parseFloat(d.reb)||0,ads=parseFloat(d.ads)||0;
   const aj=cAj(p,frete,tar,reb,ads,preco);
   const hist=(LS.get('lb_h')||[]).filter(x=>x.sku===sku).sort((a,b)=>(b.data||'').localeCompare(a.data||''));
-  const custoAnt=hist.length>0?hist[0].ant:fR(p.custo);
-  const icmsSaidaPct=p.tipo==='Importado'?((parseFloat(p.icms)||0)===12?0.155:0.185):((parseFloat(p.st)||0)>0?0.095:0.185);
+  const custoAnt=hist.length>0?fR(parseFloat(hist[0].ant)||0):fR(parseFloat(p.custo)||0);
+  const fc3=getFC();
+  const icmsBaseD=(parseFloat(p.icms)||0);
+  const icmsSaidaPct=icmsBaseD===0?0:(p.tipo==='Importado'?(icmsBaseD===12?(fc3.icmsImp12||15.5)/100:(fc3.icmsImp18||18.5)/100):((parseFloat(p.st)||0)>0?(fc3.icmsNacST||9.5)/100:(fc3.icmsNacSem||18.5)/100));
   const ipiPct=p.tipo==='Importado'?(parseFloat(p.ipi)||0)/100:0;
-  const pisSaidaPct=0.0925*(1-icmsSaidaPct);
+  const pisSaidaPct=(fc3.pisSaida||9.25)/100*(1-icmsSaidaPct);
   const denominador=1-icmsSaidaPct-ipiPct-(tar/100)-(ads/100)-pisSaidaPct;
   const breakEven=denominador>0?aj/denominador:0;
   const markup=aj>0&&preco>0?(preco/aj-1)*100:0;
@@ -2213,19 +2409,64 @@ function openDet(sku,mk){
   const kq=document.getElementById('kit-qtd');if(kq)kq.value='';
   document.getElementById('mod-det').classList.add('open');
 }
+function abrirModalKit(){
+  const qtd=parseInt((document.getElementById('kit-qtd')||{value:0}).value)||0;
+  if(qtd<2){toast('Quantidade mínima é 2','e');return;}
+  const p=(LS.get('lb_p')||[]).find(x=>x.sku===detProdSku);if(!p)return;
+  const novoSku=p.sku+'-KIT'+qtd;
+  const ps=LS.get('lb_p')||[];
+  if(ps.find(x=>x.sku===novoSku)){toast('Kit já existe: '+novoSku,'e');return;}
+  // Pré-marcar o marketplace atual e os que o produto pai já tem
+  const mks=['meli','shp','tkt','amz'];
+  mks.forEach(mk=>{
+    const el=document.getElementById('kit-mk-'+mk);
+    if(el)el.checked=(mk===detMk&&!!p[mk])||false;
+  });
+  // Marcar o mk atual sempre
+  const elCur=document.getElementById('kit-mk-'+detMk);
+  if(elCur)elCur.checked=true;
+  document.getElementById('mod-kit').classList.add('open');
+}
+
 function gerarKit(){
   const qtd=parseInt((document.getElementById('kit-qtd')||{value:0}).value)||0;
   if(qtd<2){toast('Quantidade mínima é 2','e');return;}
   const p=(LS.get('lb_p')||[]).find(x=>x.sku===detProdSku);if(!p)return;
   const novoSku=p.sku+'-KIT'+qtd;
   const ps=LS.get('lb_p')||[];
-  if(ps.find(x=>x.sku===novoSku)){toast('Kit já existe','e');return;}
-  const kit={...p,id:Date.now(),sku:novoSku,nome:(p.nome||p.sku)+' (Kit '+qtd+')',custo:parseFloat((p.custo*qtd).toFixed(2)),st:parseFloat(((p.st||0)*qtd).toFixed(2)),peso:p.peso*qtd,upAt:td(),upBy:CU.user};
+  if(ps.find(x=>x.sku===novoSku)){toast('Kit já existe: '+novoSku,'e');cM('mod-kit');return;}
+  // Coletar marketplaces selecionados
+  const mksSel={meli:false,shp:false,tkt:false,amz:false};
+  ['meli','shp','tkt','amz'].forEach(mk=>{
+    const el=document.getElementById('kit-mk-'+mk);
+    if(el)mksSel[mk]=el.checked;
+  });
+  if(!Object.values(mksSel).some(Boolean)){toast('Selecione ao menos um marketplace','e');return;}
+  // Criar produto kit apenas com flags dos marketplaces selecionados
+  const kit={...p,id:Date.now(),sku:novoSku,nome:(p.nome||p.sku)+' (Kit '+qtd+')',
+    custo:parseFloat((p.custo*qtd).toFixed(2)),
+    st:parseFloat(((p.st||0)*qtd).toFixed(2)),
+    peso:p.peso*qtd,
+    meli:mksSel.meli,shp:mksSel.shp,tkt:mksSel.tkt,amz:mksSel.amz,
+    upAt:td(),upBy:CU.user
+  };
   ps.push(kit);
+  // Criar dados de marketplace apenas para os selecionados
   const mktAll=LS.get('lb_m')||{};
-  const dPai=gM(detProdSku,detMk);
-  if(dPai.preco){const np=parseFloat((dPai.preco*qtd).toFixed(2));const nf=detMk==='meli'?fM(kit.peso,np):(parseFloat(dPai.frete||0)*qtd);mktAll[detMk+'_'+novoSku]={...dPai,preco:np,frete:parseFloat(nf.toFixed(2))};LS.set('lb_m',mktAll);}
-  LS.set('lb_p',ps);cM('mod-det');rMkt(detMk);rBase();toast('Kit '+novoSku+' criado!');
+  ['meli','shp','tkt','amz'].forEach(mk=>{
+    if(!mksSel[mk])return;
+    const dPai=gM(detProdSku,mk);
+    if(dPai.preco){
+      const np=parseFloat((dPai.preco*qtd).toFixed(2));
+      const nf=mk==='meli'?fM(kit.peso,np):(parseFloat(dPai.frete||0)*qtd);
+      mktAll[mk+'_'+novoSku]={...dPai,preco:np,frete:parseFloat(nf.toFixed(2))};
+    }
+  });
+  LS.set('lb_m',mktAll);
+  LS.set('lb_p',ps);
+  cM('mod-kit');cM('mod-det');
+  rMkt(detMk);rBase();
+  toast('Kit '+novoSku+' criado!');
 }
 
 // ── TAGS E OBS ─────────────────────────────────────────────────────
@@ -2304,12 +2545,31 @@ function impValidar(){
 function impConfirmar(){
   if(!impDadosValidos.length)return;
   const ps=LS.get('lb_p')||[];
+  const h=LS.get('lb_h')||[];
   let novos=0,atualizados=0;
   impDadosValidos.forEach((np,i)=>{
     const idx=ps.findIndex(x=>x.sku===np.sku);
-    if(idx>=0){ps[idx]={...ps[idx],...np,id:ps[idx].id};atualizados++;}
+    if(idx>=0){
+      const old=ps[idx];
+      // Gerar histórico automático se custo mudou
+      const custoAnt=parseFloat(old.custo)||0;
+      const custoNovo=parseFloat(np.custo)||0;
+      if(Math.abs(custoAnt-custoNovo)>0.001){
+        const vp=custoAnt>0?((custoNovo-custoAnt)/custoAnt*100).toFixed(2):'—';
+        h.unshift({
+          id:Date.now()+Math.random(),data:td(),sku:np.sku,nome:np.nome||old.nome||'',
+          tipo:np.tipo||old.tipo||'Importado',campo:'Custo',
+          ant:custoAnt,novo:custoNovo,
+          var:vp!=='—'?(custoNovo>=custoAnt?'+':'')+vp+'%':'—',
+          user:CU?CU.user:'importação'
+        });
+      }
+      ps[idx]={...old,...np,id:old.id};
+      atualizados++;
+    }
     else{np.id=Date.now()+i;ps.push(np);novos++;}
   });
+  LS.set('lb_h',h);
   LS.set('lb_p',ps);
   cM('mod-import');
   rBase();
@@ -2348,7 +2608,14 @@ let cmvTab='imp',cmvEditSku=null,cmvEditClb=null;
 let cmvColsOcultas=LS.get('lb_cmv_cols')||{};
 function saveCmvColsOcultas(){LS.set('lb_cmv_cols',cmvColsOcultas);}
 function setCmvTab(t){cmvTab=t;const bi=document.getElementById('cmv-tab-imp'),bn=document.getElementById('cmv-tab-nac');if(bi)bi.className='btn'+(t==='imp'?' btn-p':'');if(bn)bn.className='btn'+(t==='nac'?' btn-p':'');const ip=document.getElementById('cmv-imp-panel'),np=document.getElementById('cmv-nac-panel');if(ip)ip.style.display=t==='imp'?'':'none';if(np)np.style.display=t==='nac'?'':'none';if(t==='nac')rCmvNac();}
-function initCmvClbs(){if(!LS.get('lb_clbs'))LS.set('lb_clbs',[{nome:'CLB01',data:'2025-12-27'},{nome:'CLB02',data:'2026-02-01'},{nome:'CLB03',data:null},{nome:'CLB04',data:'2026-04-09'},{nome:'CLB05',data:'2026-04-09'}]);}
+function initCmvClbs(){
+  // Só inicializa com padrão se o cache do Supabase não trouxe nada E localStorage também está vazio
+  const cached = _cache['lb_clbs'];
+  const local = (()=>{try{const v=localStorage.getItem('lb_clbs');return v?JSON.parse(v):null;}catch{return null;}})();
+  if(!cached && !local){
+    LS.set('lb_clbs',[{nome:'CLB01',data:'2025-12-27'},{nome:'CLB02',data:'2026-02-01'},{nome:'CLB03',data:null},{nome:'CLB04',data:'2026-04-09'},{nome:'CLB05',data:'2026-04-09'}]);
+  }
+}
 function openCmvAddClb(){const el=document.getElementById('mod-clb');if(el)el.classList.add('open');document.getElementById('clb-nome').value='';document.getElementById('clb-data').value='';}
 function saveClb(){const nome=(document.getElementById('clb-nome').value||'').trim();const data=document.getElementById('clb-data').value;if(!nome){toast('Nome obrigatório','e');return;}const clbs=LS.get('lb_clbs')||[];if(clbs.find(c=>c.nome===nome)){toast('Container já existe','e');return;}clbs.push({nome,data:data||null});LS.set('lb_clbs',clbs);cM('mod-clb');rCmv();toast('Container salvo!');}
 
@@ -2537,7 +2804,7 @@ function rBaseAlertas(){
   const MKS=['meli','shp','tkt','amz'];
   const semPreco=[],custoZero=[];
   ps.forEach(p=>{
-    if(parseFloat(p.custo)||0===0)custoZero.push(p.sku);
+    if((parseFloat(p.custo)||0)===0)custoZero.push(p.sku);
     MKS.forEach(mk=>{
       if(p[mk]){const d=mkt[mk+'_'+p.sku]||{};if(!(parseFloat(d.preco)||0))semPreco.push(p.sku+' ('+mk.toUpperCase()+')');}
     });
@@ -2584,7 +2851,7 @@ function getPerms(){const v=document.getElementById('fup').value;if(v==='admin')
 function setPerms(perfil){if(perfil==='admin'){document.getElementById('fup').value='admin';document.getElementById('perfil-custom').style.display='none';}else{document.getElementById('fup').value='custom';document.getElementById('perfil-custom').style.display='';const perms=Array.isArray(perfil)?perfil:[];TODAS_PERMS.forEach(p=>{const el=document.getElementById('perm-'+p);if(el)el.checked=perms.includes(p);});}}
 function openUM(id){eUid=id||null;document.getElementById('mut').textContent=id?'Editar Usuário':'Novo Usuário';if(id){const u=(LS.get('lb_u')||[]).find(x=>x.id===id);if(!u)return;document.getElementById('fun').value=u.nome;document.getElementById('fuu').value=u.user;document.getElementById('fuse').value='';document.getElementById('fuse').placeholder='••••••• (deixe vazio para manter)';setPerms(u.perfil);}else{['fun','fuu','fuse'].forEach(i=>document.getElementById(i).value='');document.getElementById('fuse').placeholder='';setPerms([]);}document.getElementById('muser').classList.add('open');}
 function rAdmin(){const us=LS.get('lb_u')||[];const el=document.getElementById('alist');if(el)el.innerHTML=us.map(u=>{const perflbl=u.perfil==='admin'?'Admin':Array.isArray(u.perfil)?u.perfil.join(', ').toUpperCase()||'Sem acesso':u.perfil;const avBg=u.perfil==='admin'?'#1f6feb':'#6d28d9';return`<div class="uc"><div class="sb-av" style="background:${avBg};color:#fff;">${u.nome.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;">${u.nome}</div><div class="tmu tsm">@${u.user} · ${perflbl}</div></div><div class="flex g8"><button class="btn btn-sm" onclick="openUM(${u.id})">Editar</button>${u.id!==CU.id?`<button class="btn btn-sm btn-d" onclick="delU(${u.id})">Excluir</button>`:''}</div></div>`;}).join('');}
-function saveUser(){const nome=(document.getElementById('fun').value||'').trim();
+function saveUser(){if(!CU||CU.perfil!=='admin'){toast('Sem permissão','e');return;}const nome=(document.getElementById('fun').value||'').trim();
   const user=(document.getElementById('fuu').value||'').trim();
   const senhaInput=document.getElementById('fuse').value;
   const perfil=getPerms();
@@ -2604,7 +2871,7 @@ function saveUser(){const nome=(document.getElementById('fun').value||'').trim()
     LS.set('lb_u',us);cM('muser');rAdmin();toast('Usuário salvo!');
   }
 }
-function delU(id){if(!confirm('Excluir?'))return;LS.set('lb_u',(LS.get('lb_u')||[]).filter(u=>u.id!==id));rAdmin();toast('Removido.');}
+function delU(id){if(!CU||CU.perfil!=='admin'){toast('Sem permissão','e');return;}if(!confirm('Excluir?'))return;LS.set('lb_u',(LS.get('lb_u')||[]).filter(u=>u.id!==id));SB.from('usuarios').delete().eq('id',id).then(({error})=>{if(error)console.warn('Erro ao deletar usuário:',error);});rAdmin();toast('Removido.');}
 
 // ── BACKUP ─────────────────────────────────────────────────────────
 function exportarBackup(){const dados={lb_p:LS.get('lb_p')||[],lb_u:LS.get('lb_u')||[],lb_m:LS.get('lb_m')||{},lb_h:LS.get('lb_h')||[],lb_marcas:LS.get('lb_marcas')||[],lb_cats:LS.get('lb_cats')||[],lb_obs:LS.get('lb_obs')||{},lb_cmv_data:LS.get('lb_cmv_data')||{},lb_clbs:LS.get('lb_clbs')||[],lb_order:LS.get('lb_order')||{},exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logbox_backup_'+td()+'.json';a.click();toast('Backup exportado!');}
@@ -2896,6 +3163,91 @@ document.querySelectorAll('.mov').forEach(o=>{o.addEventListener('click',e=>{
   if(inputs.length>0){if(!confirm('Há dados não salvos. Deseja fechar mesmo assim?'))return;}
   cM(o.id);
 });});
+
+// ── REALTIME ─────────────────────────────────────────────────────
+let _rtChannel = null;
+function initRealtime(){
+  if(_rtChannel)_rtChannel.unsubscribe();
+  _rtChannel = SB.channel('logbox-realtime')
+    .on('postgres_changes',{event:'*',schema:'public',table:'produtos'},payload=>{
+      // Atualizar cache e re-renderizar tela ativa
+      SB.from('produtos').select('*').then(({data})=>{
+        if(!data)return;
+        _cache['lb_p']=data.map(p=>({
+          id:p.id,sku:p.sku,nome:p.nome,tipo:p.tipo,ncm:p.ncm||'',peso:parseFloat(p.peso)||0,
+          custo:parseFloat(p.custo)||0,st:parseFloat(p.st)||0,ipi:parseFloat(p.ipi)||0,
+          pis:parseFloat(p.pis)||9.25,icms:parseFloat(p.icms)||0,marca:p.marca||'',
+          categoria:p.categoria||'',meli:!!p.meli,shp:!!p.shp,amz:!!p.amz,tkt:!!p.tkt,
+          upAt:p.atualizado_em?p.atualizado_em.substring(0,10):'',upBy:p.atualizado_por||''
+        }));
+        try{localStorage.setItem('lb_p',JSON.stringify(_cache['lb_p']));}catch{}
+        const who=payload.new&&payload.new.atualizado_por&&payload.new.atualizado_por!==CU.user
+          ?payload.new.atualizado_por:null;
+        if(who)toast('📡 Produto atualizado por '+who,'ok');
+        const sc=document.querySelector('.screen.active');
+        if(sc){
+          if(sc.id==='screen-base')rBase();
+          else if(sc.id==='screen-meli')rMkt('meli');
+          else if(sc.id==='screen-shp')rMkt('shp');
+          else if(sc.id==='screen-tkt')rMkt('tkt');
+          else if(sc.id==='screen-amz')rMkt('amz');
+          else if(sc.id==='screen-dash')rDash();
+        }
+      });
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'marketplace_dados'},payload=>{
+      SB.from('marketplace_dados').select('*').then(({data})=>{
+        if(!data)return;
+        const mkt={};
+        data.forEach(r=>{mkt[r.marketplace+'_'+r.sku]={preco:parseFloat(r.preco)||0,frete:parseFloat(r.frete)||0,tar:parseFloat(r.tar)||0,reb:parseFloat(r.reb)||0,ads:parseFloat(r.ads)||0};});
+        _cache['lb_m']=mkt;
+        try{localStorage.setItem('lb_m',JSON.stringify(mkt));}catch{}
+        const sc=document.querySelector('.screen.active');
+        if(sc){
+          if(sc.id==='screen-meli')rMkt('meli');
+          else if(sc.id==='screen-shp')rMkt('shp');
+          else if(sc.id==='screen-tkt')rMkt('tkt');
+          else if(sc.id==='screen-amz')rMkt('amz');
+          else if(sc.id==='screen-dash')rDash();
+        }
+      });
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'historico_custos'},()=>{
+      const sc=document.querySelector('.screen.active');
+      if(sc&&sc.id==='screen-hist')rHist();
+    })
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'historico_precos'},()=>{
+      const sc=document.querySelector('.screen.active');
+      if(sc&&sc.id==='screen-hist')rHist();
+    })
+    .subscribe();
+}
+
+// ── PRESENÇA ──────────────────────────────────────────────────────
+let _presenceChannel = null;
+function initPresence(){
+  if(_presenceChannel)_presenceChannel.unsubscribe();
+  _presenceChannel = SB.channel('logbox-presence',{config:{presence:{key:CU.user}}})
+    .on('presence',{event:'sync'},()=>{
+      const state=_presenceChannel.presenceState();
+      const others=Object.keys(state)
+        .filter(k=>k!==CU.user)
+        .map(k=>{const s=state[k];return s&&s[0]?s[0].nome:k;});
+      const el=document.getElementById('sb-presence');
+      if(el){
+        if(others.length>0){
+          el.innerHTML='🟢 Online: '+others.map(n=>`<span style="font-weight:700;color:var(--accent2);">${n}</span>`).join(', ');
+        } else {
+          el.textContent='';
+        }
+      }
+    })
+    .subscribe(async status=>{
+      if(status==='SUBSCRIBED'){
+        await _presenceChannel.track({nome:CU.nome,user:CU.user,since:new Date().toISOString()});
+      }
+    });
+}
 
 // Boot assíncrono: carrega Supabase, depois inicializa a UI
 (async()=>{await sbLoad();initData();})();
