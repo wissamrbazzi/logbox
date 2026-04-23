@@ -733,6 +733,18 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
 
         <!-- Painel Nacionais -->
         <div id="cmv-nac-panel" style="display:none;">
+          <div class="flex g8 fc" style="margin-bottom:12px;flex-wrap:wrap;">
+            <input type="text" id="cmv-nac-busca" placeholder="Buscar por nome ou SKU..." oninput="rCmvNac()" style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:var(--r);min-width:220px;font-family:var(--font);">
+            <select id="cmv-nac-ordem" onchange="rCmvNac()" style="padding:6px 10px;font-size:12px;border:1px solid var(--border);border-radius:var(--r);font-family:var(--font);">
+              <option value="nome-az">Nome A→Z</option>
+              <option value="nome-za">Nome Z→A</option>
+              <option value="sku-az">SKU A→Z</option>
+              <option value="sku-za">SKU Z→A</option>
+              <option value="cmv-desc">CMV ↓</option>
+              <option value="cmv-asc">CMV ↑</option>
+            </select>
+            <button class="btn btn-sm" onclick="document.getElementById('cmv-nac-busca').value='';document.getElementById('cmv-nac-ordem').value='nome-az';rCmvNac();">✕ Limpar</button>
+          </div>
           <div class="card card0">
             <div class="tw">
               <table>
@@ -2835,7 +2847,51 @@ function rBaseAlertas(){
   if(semPreco.length)html+=`<div style="background:#fef9c3;border:1px solid #fde047;border-radius:var(--r);padding:10px 14px;margin-top:8px;"><span style="font-weight:700;color:#a16207;">⚠ Ativos sem preço:</span> ${semPreco.map(s=>`<span style="display:inline-block;margin:2px;background:#fde047;color:#78350f;padding:1px 8px;border-radius:20px;font-size:11px;font-weight:700;">${s}</span>`).join('')}</div>`;
   el.innerHTML=html;
 }
-function rCmvNac(){const ps=(LS.get('lb_p')||[]).filter(p=>p.tipo==='Nacional');const el=document.getElementById('cmv-nac-tbody');if(!el)return;el.innerHTML=ps.length?ps.map(p=>{const cmv=calcCMV(p);return`<tr><td class="tdl"><strong>${p.nome||p.sku}</strong></td><td class="tdc tmu">${p.sku}</td><td class="tdc"><span class="chip cna">Nacional</span></td><td class="tdc">${fR(p.custo)}</td><td class="tdc td-imp">${p.st?fR(p.st):'—'}</td><td class="tdc td-imp">${pc(p.ipi)}</td><td class="tdc td-imp">${pc(p.icms)}</td><td class="tdc col-mg">${fR(cmv)}</td></tr>`;}).join(''):`<tr><td colspan="8" class="nd">Nenhum produto nacional</td></tr>`;}
+function rCmvNac(){
+  const el=document.getElementById('cmv-nac-tbody');if(!el)return;
+  const busca=(document.getElementById('cmv-nac-busca')||{value:''}).value.toLowerCase().trim();
+  const ordem=(document.getElementById('cmv-nac-ordem')||{value:'nome-az'}).value;
+  let ps=(LS.get('lb_p')||[]).filter(p=>p.tipo==='Nacional');
+  // Filtro de busca por nome OU sku
+  if(busca){
+    ps=ps.filter(p=>
+      (p.nome||'').toLowerCase().includes(busca)||
+      (p.sku||'').toLowerCase().includes(busca)
+    );
+  }
+  // Ordenação
+  ps=ps.slice().sort((a,b)=>{
+    const cmvA=calcCMV(a),cmvB=calcCMV(b);
+    if(ordem==='nome-az')return(a.nome||a.sku).localeCompare(b.nome||b.sku);
+    if(ordem==='nome-za')return(b.nome||b.sku).localeCompare(a.nome||a.sku);
+    if(ordem==='sku-az')return(a.sku||'').localeCompare(b.sku||'');
+    if(ordem==='sku-za')return(b.sku||'').localeCompare(a.sku||'');
+    if(ordem==='cmv-desc')return cmvB-cmvA;
+    if(ordem==='cmv-asc')return cmvA-cmvB;
+    return 0;
+  });
+  el.innerHTML=ps.length
+    ?ps.map(p=>{
+        const cmv=calcCMV(p);
+        const destaque=(txt,q)=>{
+          if(!q)return txt;
+          const idx=txt.toLowerCase().indexOf(q);
+          if(idx<0)return txt;
+          return txt.substring(0,idx)+'<mark style="background:#fef08a;border-radius:2px;">'+txt.substring(idx,idx+q.length)+'</mark>'+txt.substring(idx+q.length);
+        };
+        return`<tr>
+          <td class="tdl"><strong>${destaque(p.nome||p.sku,busca)}</strong></td>
+          <td class="tdc tmu">${destaque(p.sku,busca)}</td>
+          <td class="tdc"><span class="chip cna">Nacional</span></td>
+          <td class="tdc">${fR(p.custo)}</td>
+          <td class="tdc td-imp">${p.st?fR(p.st):'—'}</td>
+          <td class="tdc td-imp">${pc(p.ipi)}</td>
+          <td class="tdc td-imp">${pc(p.icms)}</td>
+          <td class="tdc col-mg">${fR(cmv)}</td>
+        </tr>`;
+      }).join('')
+    :`<tr><td colspan="8" class="nd">${busca?'Nenhum produto encontrado para "'+busca+'"':'Nenhum produto nacional'}</td></tr>`;
+}
 function exportarRelatorioCmv(){const el=document.getElementById('mod-cmv-exp');if(el){document.getElementById('exp-data').value='';el.classList.add('open');}}
 function gerarRelatorio(){
   const dataRef=(document.getElementById('exp-data')||{value:''}).value;
