@@ -2146,7 +2146,8 @@ function ativaEdit(cellId,field,sku,mk,fmt){
         }
       }
       const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
-      lU(sku,mk);
+      // Recalcular com o valor digitado (seja modo teste ou definitivo)
+      lU(sku,mk,field,v);
       return;
     }
     const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
@@ -2164,16 +2165,21 @@ function ativaEdit(cellId,field,sku,mk,fmt){
   });
 }
 
-function lU(sku,mk){
+function lU(sku,mk,overrideField,overrideVal){
+  // overrideField/overrideVal: valor temporário (modo teste) — não salvo no cache
   if(!sku||!mk)return;
   const p=(LS.get('lb_p')||[]).find(x=>x.sku===sku);if(!p)return;
-  const d=gM(sku,mk)||{};
+  const d=Object.assign({},gM(sku,mk)||{});
+  // Aplicar override temporário se fornecido
+  if(overrideField!==undefined&&overrideVal!==undefined){
+    d[overrideField]=overrideVal;
+  }
   const preco=parseFloat(d.preco)||0;
   let frete,tar,reb,ads;
   if(mk==='shp'){
-    const sc=fShp(preco);frete=sc.frete;tar=sc.tar;reb=0;ads=parseFloat(d.ads)||0;
+    const sc=fShp(preco);frete=sc.frete;tar=sc.tar;reb=parseFloat(d.reb)||0;ads=parseFloat(d.ads)||0;
   } else if(mk==='tkt'){
-    const tc=fTkt(d);frete=tc.frete;tar=tc.tar;reb=0;ads=parseFloat(d.ads)||0;
+    const tc=fTkt(d);frete=tc.frete;tar=tc.tar;reb=parseFloat(d.reb)||0;ads=parseFloat(d.ads)||0;
   } else {
     tar=parseFloat(d.tar)||0;reb=parseFloat(d.reb)||0;ads=parseFloat(d.ads)||0;
     frete=mk==='meli'?fM(p.peso,preco):(parseFloat(d.frete)||0);
@@ -2632,7 +2638,21 @@ function salvarDataClb(nome,novaData){
   const idx=clbs.findIndex(c=>c.nome===nome);
   if(idx<0)return;
   clbs[idx].data=novaData||null;
-  LS.set('lb_clbs',clbs);rCmv();rOrganizador();toast('Data atualizada!');
+  // Atualizar cache local imediatamente
+  _cache['lb_clbs']=JSON.parse(JSON.stringify(clbs));
+  try{localStorage.setItem('lb_clbs',JSON.stringify(clbs));}catch{}
+  // Upsert direto e explícito no Supabase (não via sbPersist background)
+  SB.from('cmv_clbs').upsert({
+    clb_id: nome, nome: nome,
+    data_chegada: novaData||null,
+    ativo: true
+  },{onConflict:'clb_id'}).then(({error})=>{
+    if(error){
+      console.warn('Erro ao salvar data CLB no Supabase:',error);
+      toast('Erro ao salvar data — verifique conexão','e');
+    }
+  });
+  rCmv();rOrganizador();toast('Data atualizada!');
 }
 function toggleCmvCol(nome){cmvColsOcultas[nome]=!cmvColsOcultas[nome];saveCmvColsOcultas();rCmv();rOrganizador();}
 function abrirOrganizador(){rOrganizador();document.getElementById('mod-organizador').classList.add('open');}
