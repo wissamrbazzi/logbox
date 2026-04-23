@@ -1239,6 +1239,7 @@ async function sbPersist(k, v) {
         marketplace: mk, sku,
         preco: d.preco||0, frete: d.frete||0, tar: d.tar||0,
         reb: d.reb||0, ads: d.ads||0,
+        atualizado_por: CU?CU.user:null,
         atualizado_em: new Date().toISOString()
       }, { onConflict: 'marketplace,sku' });
     }
@@ -2345,7 +2346,7 @@ function confH(){
   pH.changes.forEach(c=>{
     const a=parseFloat(c.ant)||0,n=parseFloat(c.novo)||0;
     const vp=a>0?((n-a)/a*100).toFixed(2):'—';
-    h.push({id:Date.now()+Math.random(),data:td(),sku:pH.sku,nome:pH.nome,tipo,campo:c.campo,ant:a,novo:n,var:vp!=='—'?(n>=a?'+':'')+vp+'%':'—',user:CU.user});
+    h.push({id:Date.now()+Math.random(),data:td(),sku:pH.sku,nome:pH.nome,tipo,campo:c.campo,ant:a,novo:n,var:vp!=='—'?(n>=a?'+':'')+vp+'%':'—',user:CU?CU.user:'—'});
   });
   LS.set('lb_h',h);pH=null;cM('mhist');toast('Registrado no histórico!');
 }
@@ -2466,7 +2467,7 @@ function gerarKit(){
     st:parseFloat(((p.st||0)*qtd).toFixed(2)),
     peso:p.peso*qtd,
     meli:mksSel.meli,shp:mksSel.shp,tkt:mksSel.tkt,amz:mksSel.amz,
-    upAt:td(),upBy:CU.user
+    upAt:td(),upBy:CU?CU.user:'sistema'
   };
   ps.push(kit);
   // Criar dados de marketplace apenas para os selecionados
@@ -2650,20 +2651,7 @@ function salvarDataClb(nome,novaData){
   const idx=clbs.findIndex(c=>c.nome===nome);
   if(idx<0)return;
   clbs[idx].data=novaData||null;
-  // Atualizar cache local imediatamente
-  _cache['lb_clbs']=JSON.parse(JSON.stringify(clbs));
-  try{localStorage.setItem('lb_clbs',JSON.stringify(clbs));}catch{}
-  // Upsert direto e explícito no Supabase (não via sbPersist background)
-  SB.from('cmv_clbs').upsert({
-    clb_id: nome, nome: nome,
-    data_chegada: novaData||null,
-    ativo: true
-  },{onConflict:'clb_id'}).then(({error})=>{
-    if(error){
-      console.warn('Erro ao salvar data CLB no Supabase:',error);
-      toast('Erro ao salvar data — verifique conexão','e');
-    }
-  });
+  LS.set('lb_clbs',clbs);
   rCmv();rOrganizador();toast('Data atualizada!');
 }
 function toggleCmvCol(nome){cmvColsOcultas[nome]=!cmvColsOcultas[nome];saveCmvColsOcultas();rCmv();rOrganizador();}
@@ -2950,7 +2938,7 @@ function saveUser(){if(!CU||CU.perfil!=='admin'){toast('Sem permissão','e');ret
 function delU(id){if(!CU||CU.perfil!=='admin'){toast('Sem permissão','e');return;}if(!confirm('Excluir?'))return;LS.set('lb_u',(LS.get('lb_u')||[]).filter(u=>u.id!==id));SB.from('usuarios').delete().eq('id',id).then(({error})=>{if(error)console.warn('Erro ao deletar usuário:',error);});rAdmin();toast('Removido.');}
 
 // ── BACKUP ─────────────────────────────────────────────────────────
-function exportarBackup(){const dados={lb_p:LS.get('lb_p')||[],lb_u:LS.get('lb_u')||[],lb_m:LS.get('lb_m')||{},lb_h:LS.get('lb_h')||[],lb_marcas:LS.get('lb_marcas')||[],lb_cats:LS.get('lb_cats')||[],lb_obs:LS.get('lb_obs')||{},lb_cmv_data:LS.get('lb_cmv_data')||{},lb_clbs:LS.get('lb_clbs')||[],lb_order:LS.get('lb_order')||{},exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logbox_backup_'+td()+'.json';a.click();toast('Backup exportado!');}
+function exportarBackup(){const dados={lb_p:LS.get('lb_p')||[],lb_u:LS.get('lb_u')||[],lb_m:LS.get('lb_m')||{},lb_h:LS.get('lb_h')||[],lb_hp:LS.get('lb_hp')||[],lb_marcas:LS.get('lb_marcas')||[],lb_cats:LS.get('lb_cats')||[],lb_obs:LS.get('lb_obs')||{},lb_cmv_data:LS.get('lb_cmv_data')||{},lb_clbs:LS.get('lb_clbs')||[],lb_order:LS.get('lb_order')||{},exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logbox_backup_'+td()+'.json';a.click();toast('Backup exportado!');}
 function importarBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const dados=JSON.parse(e.target.result);if(!confirm('Substituir TODOS os dados pelo backup?'))return;Object.entries(dados).forEach(([k,v])=>{if(k!=='exportedAt')LS.set(k,v);});location.reload();}catch{toast('Arquivo inválido!','e');}};reader.readAsText(file);input.value='';}
 
 // ── GRÁFICO CMV POR SKU ───────────────────────────────────────────
@@ -3260,6 +3248,9 @@ function initRealtime(){
         const who=payload.new&&payload.new.atualizado_por&&payload.new.atualizado_por!==CU.user
           ?payload.new.atualizado_por:null;
         if(who)toast('📡 Produto atualizado por '+who,'ok');
+        // Não re-renderiza se há input de edição ativo na tela
+        const inputAtivoP=document.querySelector('.screen.active input[type="number"]');
+        if(inputAtivoP)return;
         const sc=document.querySelector('.screen.active');
         if(sc){
           if(sc.id==='screen-base')rBase();
@@ -3272,12 +3263,18 @@ function initRealtime(){
       });
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'marketplace_dados'},payload=>{
+      // Ignorar eventos do próprio usuário (atualizado_por === CU.user)
+      const quem=payload.new&&payload.new.atualizado_por;
+      if(quem&&CU&&quem===CU.user)return;
       SB.from('marketplace_dados').select('*').then(({data})=>{
         if(!data)return;
         const mkt={};
         data.forEach(r=>{mkt[r.marketplace+'_'+r.sku]={preco:parseFloat(r.preco)||0,frete:parseFloat(r.frete)||0,tar:parseFloat(r.tar)||0,reb:parseFloat(r.reb)||0,ads:parseFloat(r.ads)||0};});
         _cache['lb_m']=mkt;
         try{localStorage.setItem('lb_m',JSON.stringify(mkt));}catch{}
+        // Não re-renderiza se há input de edição ativo na tela
+        const inputAtivo=document.querySelector('.screen.active input[type="number"]');
+        if(inputAtivo)return;
         const sc=document.querySelector('.screen.active');
         if(sc){
           if(sc.id==='screen-meli')rMkt('meli');
@@ -3286,6 +3283,8 @@ function initRealtime(){
           else if(sc.id==='screen-amz')rMkt('amz');
           else if(sc.id==='screen-dash')rDash();
         }
+        const who=quem&&quem!==CU.user?quem:null;
+        if(who)toast('📡 Preço atualizado por '+who,'ok');
       });
     })
     .on('postgres_changes',{event:'INSERT',schema:'public',table:'historico_custos'},()=>{
