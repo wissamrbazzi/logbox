@@ -1204,6 +1204,18 @@ const LS = {
 };
 
 // ── PERSISTÊNCIA SUPABASE ─────────────────────────────────────────
+// Persiste apenas um item de marketplace_dados (evita loop sobre dict inteiro)
+async function sbPersistMktItem(sku, mk, d) {
+  const { error } = await SB.from('marketplace_dados').upsert({
+    marketplace: mk, sku,
+    preco: d.preco||0, frete: d.frete||0, tar: d.tar||0,
+    reb: d.reb||0, ads: d.ads||0,
+    atualizado_por: (typeof CU!=='undefined'&&CU)?CU.user:null,
+    atualizado_em: new Date().toISOString()
+  }, { onConflict: 'marketplace,sku' });
+  if (error) throw error;
+}
+
 async function sbPersist(k, v) {
   if (k === 'lb_p') {
     if (!Array.isArray(v)) return;
@@ -1531,7 +1543,7 @@ function mc(p){const fc=getFC();const am=fc.mgAmarelo||15,vd=fc.mgVerde||18;retu
 function fShp(preco){const fc=getFC();const p=parseFloat(preco)||0;if(p<=0)return{frete:0,tar:0};const faixas=(fc.shpFaixas&&fc.shpFaixas.length)?fc.shpFaixas:FC_DEFAULT.shpFaixas;const fx=faixas.find(f=>p<=f.ate)||faixas[faixas.length-1];return{frete:fx.frete||0,tar:fx.tar||0};}
 function fTkt(d){const fc=getFC();return{frete:parseFloat((d&&d.frete!=null)?d.frete:fc.tktFrete)||fc.tktFrete||4,tar:parseFloat((d&&d.tar!=null&&d.tar!==0)?d.tar:fc.tktTar)||fc.tktTar||6};}
 function gM(sku,mk){const all=LS.get('lb_m')||{};return all[mk+'_'+sku]||{};}
-function sM(sku,mk,field,val){const all=LS.get('lb_m')||{};const k=mk+'_'+sku;if(!all[k])all[k]={};all[k][field]=parseFloat(val)||0;LS.set('lb_m',all);}
+function sM(sku,mk,field,val){const all=LS.get('lb_m')||{};const k=mk+'_'+sku;if(!all[k])all[k]={};all[k][field]=parseFloat(val)||0;_cache['lb_m']=JSON.parse(JSON.stringify(all));try{localStorage.setItem('lb_m',JSON.stringify(all));}catch{}sbPersistMktItem(sku,mk,all[k]).catch(e=>{console.warn('Supabase sync error lb_m:',e);if(typeof toast==='function')toast('Erro ao salvar no servidor — verifique conexão','e');});}
 function cM(id){const el=document.getElementById(id);if(el)el.classList.remove('open');}
 function toast(msg,type='ok'){const t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.style.borderColor=type==='e'?'var(--red)':'var(--green)';t.style.color=type==='e'?'var(--red)':'var(--green)';t.style.display='block';setTimeout(()=>t.style.display='none',3000);}
 
@@ -2133,37 +2145,22 @@ function ativaEdit(cellId,field,sku,mk,fmt){
   cell.textContent='';cell.appendChild(inp);inp.focus();inp.select();
   function finish(){
     const v=parseFloat(inp.value)||0;
-    // Campos que exigem confirmação: preço e rebate
+    const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
+    // Preço e rebate: sempre salva e registra histórico automaticamente
     if((field==='preco'||field==='reb')&&v!==cur){
       const nomeCampo=field==='preco'?'Preço de Venda':'Rebate';
-      const escolha=confirm(`${nomeCampo} alterado de ${fR(cur)} → ${fR(v)}.\n\nClicar OK = Definitivo (salva e registra histórico)\nClicar Cancelar = Teste (aplica na tela mas não salva)`);
-      if(escolha){
-        sM(sku,mk,field,v);
-        // Remover modo teste visual se estava ativo
-        const rowElS=document.getElementById('mr-'+mk+'-'+sku);
-        if(rowElS){rowElS.style.background='';rowElS.dataset.testMode='';}
-        // Registrar no histórico de preços
-        const hpKey='lb_hp';
-        const hp=LS.get(hpKey)||[];
-        const p=(LS.get('lb_p')||[]).find(x=>x.sku===sku);
-        hp.unshift({id:Date.now()+Math.random(),data:td(),sku,nome:p?p.nome:'',campo:nomeCampo,mk,ant:cur,novo:v,user:CU?CU.user:'—'});
-        LS.set(hpKey,hp);
-        toast(`${nomeCampo} salvo e registrado!`);
-      } else {
-        // Modo teste: aplica visualmente sem salvar — colore linha amarela até próxima edição
-        toast('Modo teste — não salvo','e');
-        const rowEl=document.getElementById('mr-'+mk+'-'+sku);
-        if(rowEl){
-          rowEl.style.background='#fef9c3';
-          rowEl.dataset.testMode='1';
-        }
-      }
-      const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
-      // Recalcular com o valor digitado (seja modo teste ou definitivo)
-      lU(sku,mk,field,v);
+      sM(sku,mk,field,v);
+      const rowEl=document.getElementById('mr-'+mk+'-'+sku);
+      if(rowEl){rowEl.style.background='';rowEl.dataset.testMode='';}
+      const hpKey='lb_hp';
+      const hp=LS.get(hpKey)||[];
+      const p=(LS.get('lb_p')||[]).find(x=>x.sku===sku);
+      hp.unshift({id:Date.now()+Math.random(),data:td(),sku,nome:p?p.nome:'',campo:nomeCampo,mk,ant:cur,novo:v,user:CU?CU.user:'—'});
+      LS.set(hpKey,hp);
+      toast(`${nomeCampo} salvo!`);
+      lU(sku,mk);
       return;
     }
-    const disp=v?(fmt==='pct'?pc(v):fR(v)):'—';cell.textContent=disp;
     sM(sku,mk,field,v);
     lU(sku,mk);
   }
