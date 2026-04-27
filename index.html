@@ -2199,7 +2199,7 @@ function lU(sku,mk,overrideField,overrideVal){
   const elAJ=document.getElementById('aj-'+mk+'-'+sku);if(elAJ)elAJ.textContent=fR(aj);
   const eR=document.getElementById('mgR-'+mk+'-'+sku),eP=document.getElementById('mgP-'+mk+'-'+sku);
   const eTR=document.getElementById('tr-'+mk+'-'+sku),eAR=document.getElementById('ar-'+mk+'-'+sku);
-  const eFR=document.getElementById('fr-'+mk+'-'+sku);
+  const eFR=document.getElementById((mk==='tkt'||mk==='amz')?'cell-fr-'+mk+'-'+sku:'fr-'+mk+'-'+sku);
   const eTarCell=document.getElementById('cell-tar-'+mk+'-'+sku);
   if(eR){eR.textContent=m.r===''?'—':fR(m.r);eR.className='tdc col-mg '+mC;}
   if(eP){eP.textContent=m.p===''?'—':pc(m.p);eP.className='tdc col-mg '+mC;}
