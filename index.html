@@ -1208,7 +1208,7 @@ const LS = {
 async function sbPersistMktItem(sku, mk, d) {
   const { error } = await SB.from('marketplace_dados').upsert({
     marketplace: mk, sku,
-    preco: d.preco||0, frete: d.frete||0, tar: d.tar||0,
+    preco: d.preco||0, frete: (d.frete!=null&&d.frete!==0)?d.frete:null, tar: d.tar||0,
     reb: d.reb||0, ads: d.ads||0,
     atualizado_por: (typeof CU!=='undefined'&&CU)?CU.user:null,
     atualizado_em: new Date().toISOString()
@@ -1249,7 +1249,7 @@ async function sbPersist(k, v) {
       const sku = parts.slice(1).join('_');
       await SB.from('marketplace_dados').upsert({
         marketplace: mk, sku,
-        preco: d.preco||0, frete: d.frete||0, tar: d.tar||0,
+        preco: d.preco||0, frete: (d.frete!=null&&d.frete!==0)?d.frete:null, tar: d.tar||0,
         reb: d.reb||0, ads: d.ads||0,
         atualizado_por: CU?CU.user:null,
         atualizado_em: new Date().toISOString()
@@ -1396,7 +1396,7 @@ async function sbLoad() {
       const mkt = {};
       rMkt.data.forEach(r => {
         mkt[r.marketplace + '_' + r.sku] = {
-          preco: parseFloat(r.preco)||0, frete: parseFloat(r.frete)||0,
+          preco: parseFloat(r.preco)||0, frete: (r.frete!=null&&r.frete!==0)?parseFloat(r.frete):null,
           tar: parseFloat(r.tar)||0, reb: parseFloat(r.reb)||0, ads: parseFloat(r.ads)||0
         };
       });
@@ -2113,7 +2113,7 @@ function rowM(p,mk){
   // Célula de frete: Meli=automático, Shopee=automático, TikTok=editável(padrão R$4), Amazon=editável
   const fCell=(isMeli||isShp)
     ?`<td class="tdc col-frete" id="fr-${mk}-${p.sku}">${preco?fR(frete):'—'}</td>`
-    :editCell('fr-'+mk+'-'+p.sku,isTkt?(d.frete!=null?d.frete:4):(d.frete||0),'val','frete','80px','col-frete');
+    :editCell('fr-'+mk+'-'+p.sku,isTkt?fTkt(d).frete:(d.frete||0),'val','frete','80px','col-frete');
   // Célula de tarifa: Shopee=automático, TikTok=editável(padrão 6%), outros=editável
   const tarCell=isShp
     ?`<td class="tdc col-tarifa" id="cell-tar-${mk}-${p.sku}">${pc(tar)}</td>`
