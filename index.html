@@ -1593,8 +1593,8 @@ function initData(){
   if(!LS.get('lb_obs'))LS.set('lb_obs',{});
   if(!LS.get('lb_cmv_data'))LS.set('lb_cmv_data',{});
   // lb_clbs gerenciado por initCmvClbs() com verificação robusta
-  // Migração: atualizar dados incompletos com mapeamento por prefixo
-  try{
+  // Migração: roda apenas uma vez (flag lb_mig_v2 no localStorage)
+  if(!localStorage.getItem('lb_mig_v2'))try{
     const ps=LS.get('lb_p');
     if(ps&&Array.isArray(ps)){
       const MAPA_PRODUTOS={
@@ -1633,6 +1633,7 @@ function initData(){
       // Garantir categoria BOMBAS DE AR na lista
       const cats=LS.get('lb_cats')||[];
       if(!cats.includes('BOMBAS DE AR')){cats.push('BOMBAS DE AR');LS.set('lb_cats',cats);}
+      localStorage.setItem('lb_mig_v2','1');
     }
   }catch(e){console.warn('Migração de dados falhou:',e);}
 }
@@ -1685,8 +1686,16 @@ function buildSB(){
 const TBM={dash:{t:'Dashboard',b:'',bs:''},base:{t:'Base de Dados',b:'Fonte única de custo',bs:'background:#0a1929;color:#60a5fa;'},meli:{t:'Mercado Livre',b:'Marketplace',bs:'background:var(--mlbg);color:var(--meli);'},shp:{t:'Shopee',b:'Marketplace',bs:'background:var(--shpbg);color:var(--shp);'},amz:{t:'Amazon',b:'Marketplace',bs:'background:var(--amzbg);color:var(--amz);'},rap:{t:'Precificação Rápida',b:'Simulador',bs:'background:var(--purpbg);color:var(--purple);'},hist:{t:'Histórico',b:'Custos · Preços · Rebate',bs:'background:var(--purpbg);color:var(--purple);'},cmv:{t:'CMV Contábil',b:'Por Container',bs:'background:var(--purpbg);color:var(--purple);'},admin:{t:'Usuários',b:'Admin',bs:'background:var(--rbg);color:var(--red);'},fiscal:{t:'Configurações Fiscais',b:'Admin',bs:'background:#fef9c3;color:#a16207;'}};
 
 function nav(id){
-  // Guardar acesso: admin e fiscal apenas para admin
-  if((id==='admin'||id==='fiscal')&&CU&&CU.perfil!=='admin'){toast('Sem permissão de acesso','e');return;}
+  // Verificação de permissão completa — bloqueia acesso por console também
+  if(!CU)return;
+  const isAdmin=CU.perfil==='admin';
+  const perms=Array.isArray(CU.perfil)?CU.perfil:[];
+  if(!isAdmin){
+    if(id==='admin'||id==='fiscal'){toast('Sem permissão de acesso','e');return;}
+    // Telas que exigem permissão explícita para não-admin
+    const TELAS_PROTEGIDAS=['dash','base','meli','shp','tkt','amz','rap','cmv','hist'];
+    if(TELAS_PROTEGIDAS.includes(id)&&!perms.includes(id)){toast('Sem permissão de acesso','e');return;}
+  }
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('act','act-meli','act-shp','act-amz'));
   const sc=document.getElementById('screen-'+id);if(sc)sc.classList.add('active');
@@ -2084,8 +2093,7 @@ function rowM(p,mk){
     tar=shpCalc.tar;
     reb=parseFloat(d.reb)||0;
     ads=parseFloat(d.ads)||0;
-    // Salvar tar e frete calculados para consistência
-    if(preco){const mk2=LS.get('lb_m')||{};const k='shp_'+p.sku;if(!mk2[k])mk2[k]={};mk2[k].tar=tar;mk2[k].frete=frete;LS.set('lb_m',mk2);}
+    // tar e frete Shopee são sempre calculados dinamicamente — não persistir em rowM()
   } else if(isTkt){
     const tktCalc=fTkt(d);
     frete=tktCalc.frete;
@@ -2789,7 +2797,7 @@ function openCmvProd(sku,clbNome){
   document.getElementById('mod-cmv-title').textContent=`CMV — ${sku} / ${clbNome}`;
   document.getElementById('cmv-prod-sku').textContent=sku;document.getElementById('cmv-prod-clb').textContent=clbNome;
   document.getElementById('cmv-prod-ant').textContent=cmvAnt?'R$ '+fn(cmvAnt):'R$ 0,00';
-  document.getElementById('cmv-estoque').value=d.estoque||'';document.getElementById('cmv-valor').value=d.cmv||cmvAnt||'';document.getElementById('cmv-qtd').value=d.qtd||'';
+  document.getElementById('cmv-estoque').value=d.estoque||'';document.getElementById('cmv-valor').value=d.cmv||'';document.getElementById('cmv-qtd').value=d.qtd||'';
   calcCmvModal();document.getElementById('mod-cmv-prod').classList.add('open');
 }
 function calcCmvModal(){
@@ -2936,7 +2944,8 @@ function delU(id){if(!CU||CU.perfil!=='admin'){toast('Sem permissão','e');retur
 
 // ── BACKUP ─────────────────────────────────────────────────────────
 function exportarBackup(){const dados={lb_p:LS.get('lb_p')||[],lb_u:LS.get('lb_u')||[],lb_m:LS.get('lb_m')||{},lb_h:LS.get('lb_h')||[],lb_hp:LS.get('lb_hp')||[],lb_marcas:LS.get('lb_marcas')||[],lb_cats:LS.get('lb_cats')||[],lb_obs:LS.get('lb_obs')||{},lb_cmv_data:LS.get('lb_cmv_data')||{},lb_clbs:LS.get('lb_clbs')||[],lb_order:LS.get('lb_order')||{},exportedAt:new Date().toISOString()};const blob=new Blob([JSON.stringify(dados,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logbox_backup_'+td()+'.json';a.click();toast('Backup exportado!');}
-function importarBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const dados=JSON.parse(e.target.result);if(!confirm('Substituir TODOS os dados pelo backup?'))return;Object.entries(dados).forEach(([k,v])=>{if(k!=='exportedAt')LS.set(k,v);});location.reload();}catch{toast('Arquivo inválido!','e');}};reader.readAsText(file);input.value='';}
+function importarBackup(input){const file=input.files[0];if(!file)return;const reader=new FileReader();reader.onload=e=>{try{const dados=JSON.parse(e.target.result);if(!confirm('Substituir dados pelo backup?\n\n⚠ Preços de marketplace e histórico de preços NÃO serão alterados — esses dados são sempre carregados do servidor.'))return;// lb_m e lb_hp são fonte de verdade no Supabase — nunca restaurar do backup
+const IGNORAR=new Set(['exportedAt','lb_m','lb_hp']);Object.entries(dados).forEach(([k,v])=>{if(!IGNORAR.has(k))LS.set(k,v);});location.reload();}catch{toast('Arquivo inválido!','e');}};reader.readAsText(file);input.value='';}
 
 // ── GRÁFICO CMV POR SKU ───────────────────────────────────────────
 let _chartCmv=null,_chartCusto=null;
@@ -3260,9 +3269,10 @@ function initRealtime(){
       });
     })
     .on('postgres_changes',{event:'*',schema:'public',table:'marketplace_dados'},payload=>{
-      // Ignorar eventos do próprio usuário (atualizado_por === CU.user)
+      // Ignorar eventos sem autor identificado (migração, backup, script externo) e do próprio usuário
       const quem=payload.new&&payload.new.atualizado_por;
-      if(quem&&CU&&quem===CU.user)return;
+      if(!quem)return;
+      if(CU&&quem===CU.user)return;
       SB.from('marketplace_dados').select('*').then(({data})=>{
         if(!data)return;
         const mkt={};
