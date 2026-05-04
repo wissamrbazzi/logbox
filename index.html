@@ -2790,7 +2790,7 @@ function rCmv(){
 }
 function openCmvProd(sku,clbNome){
   cmvEditSku=sku;cmvEditClb=clbNome;
-  const cmvData=LS.get('lb_cmv_data')||{};const clbs=LS.get('lb_clbs')||[];
+  const cmvData=LS.get('lb_cmv_data')||{};const clbs=(LS.get('lb_clbs')||[]).slice().sort((a,b)=>{if(a.data&&b.data)return a.data.localeCompare(b.data);if(a.data)return -1;if(b.data)return 1;return 0;});
   const clbIdx=clbs.findIndex(c=>c.nome===clbNome);
   let cmvAnt=0;for(let i=clbIdx-1;i>=0;i--){const pk=sku+'_'+clbs[i].nome;if(cmvData[pk]){cmvAnt=cmvData[pk].cmvMed||0;break;}}
   const d=cmvData[sku+'_'+clbNome]||{};
@@ -2804,7 +2804,7 @@ function calcCmvModal(){
   const est=parseFloat(document.getElementById('cmv-estoque').value)||0;
   const cmvV=parseFloat(document.getElementById('cmv-valor').value)||0;
   const qtd=parseFloat(document.getElementById('cmv-qtd').value)||0;
-  const cmvData=LS.get('lb_cmv_data')||{};const clbs=LS.get('lb_clbs')||[];
+  const cmvData=LS.get('lb_cmv_data')||{};const clbs=(LS.get('lb_clbs')||[]).slice().sort((a,b)=>{if(a.data&&b.data)return a.data.localeCompare(b.data);if(a.data)return -1;if(b.data)return 1;return 0;});
   const clbIdx=clbs.findIndex(c=>c.nome===cmvEditClb);
   let cmvAnt=0;for(let i=clbIdx-1;i>=0;i--){const pk=cmvEditSku+'_'+clbs[i].nome;if(cmvData[pk]){cmvAnt=cmvData[pk].cmvMed||0;break;}}
   const cmvMed=est+qtd>0?((est*cmvAnt)+(qtd*cmvV))/(est+qtd):cmvV;
@@ -2814,7 +2814,7 @@ function saveCmvProd(){
   const est=parseFloat(document.getElementById('cmv-estoque').value)||0;
   const cmvV=parseFloat(document.getElementById('cmv-valor').value)||0;
   const qtd=parseFloat(document.getElementById('cmv-qtd').value)||0;
-  const cmvData=LS.get('lb_cmv_data')||{};const clbs=LS.get('lb_clbs')||[];
+  const cmvData=LS.get('lb_cmv_data')||{};const clbs=(LS.get('lb_clbs')||[]).slice().sort((a,b)=>{if(a.data&&b.data)return a.data.localeCompare(b.data);if(a.data)return -1;if(b.data)return 1;return 0;});
   const clbIdx=clbs.findIndex(c=>c.nome===cmvEditClb);
   let cmvAnt=0;for(let i=clbIdx-1;i>=0;i--){const pk=cmvEditSku+'_'+clbs[i].nome;if(cmvData[pk]){cmvAnt=cmvData[pk].cmvMed||0;break;}}
   const cmvMed=est+qtd>0?((est*cmvAnt)+(qtd*cmvV))/(est+qtd):cmvV;
