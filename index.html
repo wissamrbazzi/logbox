@@ -461,6 +461,7 @@ tr.drag-over{border-top:2px solid var(--accent2)!important;}
               <div class="fg"><label class="fl">ST (R$)</label><div class="pfx"><span>R$</span><input type="number" id="rst" step="0.01" oninput="cRap()"></div></div>
               <div class="fg"><label class="fl">IPI %</label><div class="pfx"><span>%</span><input type="number" id="ripi" step="0.01" oninput="cRap()"></div></div>
               <div class="fg"><label class="fl">PIS/COFINS %</label><div class="pfx"><span>%</span><input type="number" id="rpis" step="0.01" oninput="cRap()"></div></div>
+              <div class="fg"><label class="fl">Tipo do Produto</label><select id="rtipo" class="full" onchange="cRap()"><option value="Nacional">Nacional</option><option value="Importado">Importado</option></select></div>
             </div>
             <div class="gr g4">
               <div class="fg"><label class="fl">ICMS %</label><div class="pfx"><span>%</span><input type="number" id="ricms" step="0.01" oninput="cRap()"></div></div>
@@ -933,8 +934,8 @@ function toast(msg,type='ok'){const t=document.getElementById('toast');if(!t)ret
 
 // CÁLCULOS
 function calcCMV(p){const fc=getFC();const c=parseFloat(p.custo)||0,st=parseFloat(p.st)||0,ipi=(parseFloat(p.ipi)||0)/100,icms=(parseFloat(p.icms)||0)/100,temST=st>0,pisPct=(fc.pisEntrada||9.25)/100,pis=temST?pisPct*(c+c*ipi):pisPct*(c-c*icms+c*ipi);return parseFloat((temST?(c+st+c*ipi-pis):(c+c*ipi-pis-c*icms)).toFixed(4));}
-function cAj(p,frete,tarP,reb,adsP,preco){const fc=getFC();const base=p.tipo==='Nacional'?calcCMV(p):(parseFloat(p.custo)||0),fr=parseFloat(frete)||0,pr=parseFloat(preco)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100,pisFr=(fc.pisFrete||9.25)/100,pisTr=(fc.pisTar||9.25)/100,pisAd=(fc.pisAds||9.25)/100,icmsFr=(fc.icmsFrete||12)/100,precoFr=fc.precoFrete||78.99;return parseFloat((base-(pr>precoFr&&fr>0?fr*icmsFr:0)-fr*pisFr-(pr*tar-rb)*pisTr-(pr*ads)*pisAd).toFixed(4));}
-function cMarg(p,preco,frete,tarP,reb,adsP){const fc=getFC();if(!preco)return{r:'',p:''};const pr=parseFloat(preco)||0,fr=parseFloat(frete)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100,aj=cAj(p,fr,tarP,rb,adsP,pr),icmsBase=(parseFloat(p.icms)||0),icmsSaidaPct=icmsBase===0?0:(p.tipo==='Importado'?(icmsBase===12?(fc.icmsImp12||15.5)/100:(fc.icmsImp18||18.5)/100):((parseFloat(p.st)||0)>0?(fc.icmsNacST||9.5)/100:(fc.icmsNacSem||18.5)/100)),icmsSaida=pr*icmsSaidaPct,pisSaida=(fc.pisSaida||9.25)/100*(pr-icmsSaida),ipiSaida=p.tipo==='Importado'?(pr*(parseFloat(p.ipi)||0)/100):0,mR=pr-aj-fr-(pr*tar-rb)-(pr*ads)-pisSaida-icmsSaida-ipiSaida;return{r:parseFloat(mR.toFixed(2)),p:parseFloat(pr>0?(mR/pr*100):0).toFixed(2)*1};}
+function cAj(p,frete,tarP,reb,adsP,preco){const fc=getFC();const base=calcCMV(p),fr=parseFloat(frete)||0,pr=parseFloat(preco)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100,pisFr=(fc.pisFrete||9.25)/100,pisTr=(fc.pisTar||9.25)/100,pisAd=(fc.pisAds||9.25)/100;return parseFloat((base-fr*pisFr-(pr*tar-rb)*pisTr-(pr*ads)*pisAd).toFixed(4));}
+function cMarg(p,preco,frete,tarP,reb,adsP){const fc=getFC();if(!preco)return{r:'',p:''};const pr=parseFloat(preco)||0,fr=parseFloat(frete)||0,tar=(parseFloat(tarP)||0)/100,rb=parseFloat(reb)||0,ads=(parseFloat(adsP)||0)/100,aj=cAj(p,fr,tarP,rb,adsP,pr),icmsBase=(parseFloat(p.icms)||0),temST=(parseFloat(p.st)||0)>0,icmsSaidaPct=icmsBase===0?0:(temST?(fc.icmsNacST||9.45)/100:(p.tipo==='Importado'?(icmsBase===12?(fc.icmsImp12||15.5)/100:(fc.icmsImp18||18.5)/100):(fc.icmsNacSem||18.5)/100)),icmsSaida=pr*icmsSaidaPct,pisSaida=(fc.pisSaida||9.25)/100*(pr-icmsSaida),ipiSaida=p.tipo==='Importado'&&!temST?(pr*(parseFloat(p.ipi)||0)/100):0,mR=pr-aj-fr-(pr*tar-rb)-(pr*ads)-pisSaida-icmsSaida-ipiSaida;return{r:parseFloat(mR.toFixed(2)),p:parseFloat(pr>0?(mR/pr*100):0).toFixed(2)*1};}
 
 // GLOBAIS
 let CU=null;
@@ -1436,8 +1437,9 @@ function cRap(){
   const g=id=>parseFloat(document.getElementById(id)?document.getElementById(id).value:0)||0;
   const custo=g('rc'),st=g('rst'),ipi=g('ripi'),pis=g('rpis'),icms=g('ricms');
   const peso=g('rpeso'),preco=g('rp'),reb=g('rrb'),ads=g('rads');
-  // Montar objeto produto para reutilizar cAj e cMarg (Bug 3 corrigido)
-  const p={tipo:'Importado',custo,st,ipi,pis,icms};
+  // Montar objeto produto para reutilizar cAj e cMarg
+  const tipo_rap=document.getElementById('rtipo')?document.getElementById('rtipo').value:'Nacional';
+  const p={tipo:tipo_rap,custo,st,ipi,pis,icms};
   let tar,frete;
   if(rapT==='shp'){
     const sc=fShp(preco);tar=sc.tar;frete=sc.frete;
